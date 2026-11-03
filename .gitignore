@@ -1,0 +1,12 @@
+# Environment configuration
+.env
+.env.*
+!.env.example
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Build and coverage output
+dist/
+coverage/

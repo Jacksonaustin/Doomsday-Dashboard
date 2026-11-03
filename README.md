@@ -148,3 +148,25 @@ Can:
 cd client
 npm install
 npm run dev
+```
+
+### Backend
+
+The Express API is in `backend/` and requires Node.js 18+ and a running MongoDB
+instance.
+
+```bash
+cd backend
+npm install
+npm run dev
+```
+
+Before starting, copy `backend/.env.example` to `backend/.env` (use
+`Copy-Item backend/.env.example backend/.env` in PowerShell or
+`cp backend/.env.example backend/.env` on macOS/Linux). Update `MONGO_URI` if
+MongoDB is not using the local default. The API starts on port `5000` by default;
+set `PORT` to change it.
+
+The initial readiness endpoint is `GET http://localhost:5000/api/health`. It
+reports whether the API can reach MongoDB. Unknown routes return a JSON 404
+response. Run the backend test command with `npm test`.

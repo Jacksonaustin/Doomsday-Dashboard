@@ -23,6 +23,10 @@ bugfix/inventory-delete
 
 hotfix/login-validation
 
+backend/Scaffolding
+
+frontend/Schaffolding
+
 ---
 
 # Naming Conventions
@@ -424,26 +428,6 @@ Before approving a pull request:
 - Documentation updated
 - No hardcoded secrets
 - No dead code
-
----
-
-# Git Commit Standards
-
-Use descriptive commit messages.
-
-Examples:
-
-```text
-feat: add inventory creation endpoint
-
-feat: implement disaster simulation calculations
-
-fix: resolve inventory deletion bug
-
-test: add recommendation engine unit tests
-
-docs: update API documentation
-```
 
 ---
 
