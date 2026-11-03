@@ -4,6 +4,7 @@ import Navbar from './components/Navbar.jsx'
 import HomePage from './pages/HomePage.jsx'
 import AuthPage from './pages/AuthPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
+import InventoryPage from './pages/Inventory.jsx'
 
 function ScrollToLocation() {
   const { pathname, hash } = useLocation()
@@ -30,6 +31,7 @@ export default function App() {
 
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/inventory" element={<InventoryPage />} />
         <Route path="/login" element={<AuthPage key="login" mode="login" />} />
         <Route path="/register" element={<AuthPage key="register" mode="register" />} />
         <Route path="*" element={<NotFoundPage />} />
