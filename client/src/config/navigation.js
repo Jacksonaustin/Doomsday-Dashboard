@@ -2,8 +2,8 @@
 // Add future tabs here only after their pages/routes actually exist.
 export const publicNavItems = [
   { label: 'Home', to: '/' },
-  { label: 'Features', to: '/#features' },
-  { label: 'How it works', to: '/#how-it-works' },
+  { label: 'inventory', to: '/pages/inventory' },
+
 ]
 
 // Once authentication is connected, add a separate list for signed-in

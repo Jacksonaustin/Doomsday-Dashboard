@@ -60,7 +60,7 @@ export default function Navbar() {
             <Icon name="arrow" size={16} />
           </Link>
         </div>
-
+        {/* mobile side ---------------------------------------------------------------- */}
         <button
           className="mobile-toggle"
           type="button"
