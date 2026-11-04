@@ -1,19 +1,5 @@
-import { Link } from 'react-router-dom'
 
-const features = [
-  {
-    title: 'Inventory Management',
-    description: 'Keep track of your food, water, medical supplies, and equipment.',
-  },
-  {
-    title: 'Resource Analysis',
-    description: 'See how long your supplies could last and identify shortages.',
-  },
-  {
-    title: 'Recommendations',
-    description: 'Get suggestions based on your inventory and household needs.',
-  },
-]
+import { Link } from 'react-router-dom'
 
 export default function HomePage() {
   return (
@@ -23,7 +9,7 @@ export default function HomePage() {
       <section className="border-b border-[#334337]">
         <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
           <h1 className="mb-5 text-4xl font-bold md:text-5xl">
-            Prepare for the END 
+            Prepare for the END
           </h1>
 
           <p className="mb-8 max-w-2xl text-lg text-[#b5c6b7]">
@@ -38,42 +24,59 @@ export default function HomePage() {
             >
               Get Started
             </Link>
-
-
-
           </div>
         </div>
       </section>
 
-      {/* Overview of the application's main features */}
+      {/* Main features */}
       <section id="features" className="mx-auto max-w-6xl px-6 py-16">
         <h2 className="mb-8 text-2xl font-semibold">
           Features
         </h2>
 
         <div className="grid gap-5 md:grid-cols-3">
-          {features.map((feature) => (
-            <div
-              key={feature.title}
-              className="rounded-lg border border-[#354839] bg-[#1e2b22] p-6"
-            >
-              <h3 className="mb-3 text-lg font-semibold">
-                {feature.title}
-              </h3>
 
-              <p className="text-[#b5c6b7]">
-                {feature.description}
-              </p>
-            </div>
-          ))}
+          {/* Inventory Management */}
+          <div className="rounded-lg border border-[#354839] bg-[#1e2b22] p-6">
+            <h3 className="mb-3 text-lg font-semibold">
+              Inventory Management
+            </h3>
+
+            <p className="text-[#b5c6b7]">
+              Keep track of your food, water, medical supplies, and equipment.
+            </p>
+          </div>
+
+          {/* Resource Analysis */}
+          <div className="rounded-lg border border-[#354839] bg-[#1e2b22] p-6">
+            <h3 className="mb-3 text-lg font-semibold">
+              Resource Analysis
+            </h3>
+
+            <p className="text-[#b5c6b7]">
+              See how long your supplies could last and identify shortages.
+            </p>
+          </div>
+
+          {/* Recommendations */}
+          <div className="rounded-lg border border-[#354839] bg-[#1e2b22] p-6">
+            <h3 className="mb-3 text-lg font-semibold">
+              Recommendations
+            </h3>
+
+            <p className="text-[#b5c6b7]">
+              Get suggestions based on your inventory and household needs.
+            </p>
+          </div>
+
         </div>
       </section>
 
-      {/* Simple explanation for new users */}
+      {/* How it works */}
       <section id="how-it-works" className="bg-[#19241c]">
         <div className="mx-auto max-w-6xl px-6 py-14">
           <h2 className="mb-4 text-2xl font-semibold">
-            How It Works
+            How It Works!
           </h2>
 
           <p className="max-w-2xl leading-7 text-[#b5c6b7]">
