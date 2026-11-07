@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Icon from '../components/Icon.jsx'
+import useAuth from '../context/useAuth.js'
 import { loginUser, registerUser } from '../services/api.js'
 
 function getErrorMessage(error) {
@@ -8,15 +9,14 @@ function getErrorMessage(error) {
     return 'Unable to reach the API. Make sure the backend is running.'
   }
 
-  if (error.response.status === 404) {
-    return 'Authentication is not connected yet. The backend still needs these routes.'
-  }
-
   return error.response.data?.message || 'Something went wrong. Please try again.'
 }
 
 export default function AuthPage({ mode }) {
   const isRegister = mode === 'register'
+  const { authenticate } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
 
   const [values, setValues] = useState({
     name: '',
@@ -75,13 +75,8 @@ export default function AuthPage({ mode }) {
         throw new Error(result.message || 'The request was not accepted.')
       }
 
-      // The backend doesn't handle sessions yet, so don't claim the user is logged in.
-      setNotice({
-        type: 'success',
-        message: isRegister
-          ? 'Registration request was accepted by the API.'
-          : 'Login request was accepted by the API. Session handling is the next integration step.',
-      })
+      authenticate(result.user)
+      navigate(location.state?.from?.pathname || '/inventory', { replace: true })
     } catch (error) {
       setNotice({
         type: 'error',
@@ -153,11 +148,6 @@ export default function AuthPage({ mode }) {
               ? 'Start building your personalized preparedness plan.'
               : 'Sign in to your preparedness dashboard.'}
           </p>
-
-          <div className="auth-availability">
-            <Icon name="alert" size={17} />
-            <span>Frontend preview: authentication API integration is pending.</span>
-          </div>
 
           <form className="auth-form" onSubmit={handleSubmit} noValidate>
             {isRegister && (
@@ -253,7 +243,7 @@ export default function AuthPage({ mode }) {
               type="submit"
               disabled={pending}
             >
-              {pending ? 'Connecting to API…' : isRegister ? 'Create Account' : 'Log In'}
+              {pending ? 'Please wait…' : isRegister ? 'Create Account' : 'Log In'}
               {!pending && <Icon name="arrow" size={18} />}
             </button>
           </form>
