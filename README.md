@@ -164,9 +164,15 @@ npm run dev
 Before starting, copy `backend/.env.example` to `backend/.env` (use
 `Copy-Item backend/.env.example backend/.env` in PowerShell or
 `cp backend/.env.example backend/.env` on macOS/Linux). Update `MONGO_URI` if
-MongoDB is not using the local default. The API starts on port `5000` by default;
-set `PORT` to change it.
+MongoDB is not using the local default. Replace `JWT_SECRET` with a random value
+at least 32 characters long. The API starts on port `5000` by default; set
+`PORT` to change it.
 
 The initial readiness endpoint is `GET http://localhost:5000/api/health`. It
-reports whether the API can reach MongoDB. Unknown routes return a JSON 404
-response. Run the backend test command with `npm test`.
+reports whether the API can reach MongoDB. Accounts can be created with
+`POST /api/auth/register` (`name`, `email`, and `password`) and used to sign in
+with `POST /api/auth/login` (`email` and `password`). Successful registration
+and login issue an HTTP-only session cookie; `GET /api/auth/me` verifies it and
+`POST /api/auth/logout` clears it. The inventory page redirects to sign-in when
+there is no valid session. Unknown routes return a JSON 404 response. Run the
+backend test command with `npm test`.
