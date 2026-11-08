@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar.jsx'
+import { GuestRoute, ProtectedRoute } from './components/RouteGuards.jsx'
+import { AuthProvider } from './context/AuthContext.jsx'
 import HomePage from './pages/HomePage.jsx'
 import AuthPage from './pages/AuthPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
@@ -25,19 +27,41 @@ function ScrollToLocation() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <ScrollToLocation />
-      <Navbar />
+    <AuthProvider>
+      <BrowserRouter>
+        <ScrollToLocation />
+        <Navbar />
 
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/inventory" element={<InventoryPage />} />
-        <Route path="/login" element={<AuthPage key="login" mode="login" />} />
-        <Route path="/register" element={<AuthPage key="register" mode="register" />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route
+            path="/inventory"
+            element={
+              <ProtectedRoute>
+                <InventoryPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <GuestRoute>
+                <AuthPage key="login" mode="login" />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <GuestRoute>
+                <AuthPage key="register" mode="register" />
+              </GuestRoute>
+            }
+          />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
 
-      
-    </BrowserRouter>
+      </BrowserRouter>
+    </AuthProvider>
   )
 }

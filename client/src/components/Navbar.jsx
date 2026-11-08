@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { publicNavItems } from '../config/navigation.js'
+import useAuth from '../context/useAuth.js'
 import Icon from './Icon.jsx'
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [logoutError, setLogoutError] = useState('')
   const location = useLocation()
+  const { user, logout } = useAuth()
 
   function isCurrent(to) {
     const [pathname, hash] = to.split('#')
@@ -18,6 +21,16 @@ export default function Navbar() {
 
   function closeMenu() {
     setMenuOpen(false)
+  }
+
+  async function handleLogout() {
+    try {
+      await logout()
+      setLogoutError('')
+      closeMenu()
+    } catch {
+      setLogoutError('Unable to log out. Please try again.')
+    }
   }
 
   // Both desktop and mobile links use the same navigation configuration.
@@ -52,13 +65,24 @@ export default function Navbar() {
         </nav>
 
         <div className="desktop-actions">
-          <Link className="nav-login" to="/login">
-            Log in
-          </Link>
-          <Link className="button button-primary button-small" to="/register">
-            Get Started
-            <Icon name="arrow" size={16} />
-          </Link>
+          {user ? (
+            <>
+              <span className="nav-user">{user.name}</span>
+              <button className="nav-logout" type="button" onClick={handleLogout}>
+                Log out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link className="nav-login" to="/login">
+                Log in
+              </Link>
+              <Link className="button button-primary button-small" to="/register">
+                Get Started
+                <Icon name="arrow" size={16} />
+              </Link>
+            </>
+          )}
         </div>
         {/* mobile side ---------------------------------------------------------------- */}
         <button
@@ -80,14 +104,23 @@ export default function Navbar() {
             </Link>
           ))}
 
-          <Link to="/login" onClick={closeMenu}>
-            Log in
-          </Link>
-          <Link className="mobile-start" to="/register" onClick={closeMenu}>
-            Get Started
-          </Link>
+          {user ? (
+            <button type="button" onClick={handleLogout}>
+              Log out
+            </button>
+          ) : (
+            <>
+              <Link to="/login" onClick={closeMenu}>
+                Log in
+              </Link>
+              <Link className="mobile-start" to="/register" onClick={closeMenu}>
+                Get Started
+              </Link>
+            </>
+          )}
         </nav>
       )}
+      {logoutError && <p className="nav-error" role="alert">{logoutError}</p>}
     </header>
   )
 }
