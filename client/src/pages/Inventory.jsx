@@ -21,7 +21,64 @@ export default function InventoryPage() {
   // Controls whether the Add Item popup is visible
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
 
+  // Temporary inventory storage until the backend is connected
+  const [items, setItems] = useState([])
+
+  // For adding items to the inventory :D
   const [itemName, setItemName] = useState("")
+  const [itemQuantity, setItemQuantity] = useState("1")
+  const [itemUnit, setItemUnit] = useState("pieces")
+  const [itemCategory, setItemCategory] = useState("Food")
+
+  // Open the popup and select the current category
+  function openAddModal() {
+    setItemCategory(
+      selectedCategory === "All Supplies" ? "Food" : selectedCategory
+    )
+
+    setIsAddModalOpen(true)
+  }
+
+  // Close the popup and reset the form
+  function closeAddModal() {
+    setIsAddModalOpen(false)
+    setItemName("")
+    setItemQuantity("1")
+    setItemUnit("pieces")
+    setItemCategory("Food")
+  }
+
+  // Temporarily save the item in React state
+  function handleAddItem(event) {
+    event.preventDefault()
+
+    const name = itemName.trim()
+    const quantity = Number(itemQuantity)
+
+    // Validate the item before saving
+    if (!name || !Number.isFinite(quantity) || quantity <= 0) {
+      return
+    }
+
+    const newItem = {
+      id: crypto.randomUUID(),
+      name: name,
+      quantity: quantity,
+      unit: itemUnit,
+      category: itemCategory
+    }
+
+    setItems((previousItems) => [...previousItems, newItem])
+
+    closeAddModal()
+  }
+
+  // Only display items belonging to the selected category
+  const visibleItems = items.filter(
+    (item) =>
+      selectedCategory === "All Supplies" ||
+      item.category === selectedCategory
+  )
 
   return (
     <main className="min-h-screen bg-[#101713] text-[#eaf2ea]">
@@ -70,17 +127,46 @@ export default function InventoryPage() {
 
               <button
                 type="button"
-                onClick={() => setIsAddModalOpen(true)}
+                onClick={openAddModal}
                 className="rounded-md bg-[#b6db8a] px-4 py-2 text-sm font-semibold text-[#101713] transition-colors hover:bg-[#c9eca0]"
               >
                 + Add Item
               </button>
             </div>
 
-            {/* Temporary empty inventory message */}
-            <p className="mt-3 text-sm text-[#b5c6b7]">
-              No supplies added yet.
-            </p>
+            {/* Display inventory items */}
+            {visibleItems.length === 0 ? (
+              <p className="mt-3 text-sm text-[#b5c6b7]">
+                No supplies added yet.
+              </p>
+            ) : (
+              <div className="mt-6 overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-b border-[#304235] text-[#b5c6b7]">
+                    <tr>
+                      <th className="px-3 py-3">Item</th>
+                      <th className="px-3 py-3">Quantity</th>
+                      <th className="px-3 py-3">Unit</th>
+                      <th className="px-3 py-3">Category</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {visibleItems.map((item) => (
+                      <tr
+                        key={item.id}
+                        className="border-b border-[#304235]"
+                      >
+                        <td className="px-3 py-3">{item.name}</td>
+                        <td className="px-3 py-3">{item.quantity}</td>
+                        <td className="px-3 py-3">{item.unit}</td>
+                        <td className="px-3 py-3">{item.category}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
         </div>
       </div>
@@ -107,7 +193,7 @@ export default function InventoryPage() {
 
               <button
                 type="button"
-                onClick={() => setIsAddModalOpen(false)}
+                onClick={closeAddModal}
                 aria-label="Close popup"
                 className="rounded-md px-2 py-1 text-[#b5c6b7] hover:bg-[#304235] hover:text-white"
               >
@@ -115,14 +201,135 @@ export default function InventoryPage() {
               </button>
             </div>
 
-            {/* Item form will be added here */}
-            <p className="mt-4 text-sm text-[#b5c6b7]">
-              Item form will go here.
-            </p>
+            {/* Add Item form */}
+            <form onSubmit={handleAddItem}>
+
+              {/* Item name input field */}
+              <div className="mt-6">
+                <label
+                  htmlFor="item-name"
+                  className="mb-2 block text-sm font-medium"
+                >
+                  Item Name
+                </label>
+
+                <input
+                  id="item-name"
+                  type="text"
+                  placeholder="Enter item name"
+                  value={itemName}
+                  onChange={(event) => setItemName(event.target.value)}
+                  required
+                  className="w-full rounded-md border border-[#304235] bg-[#101713] px-3 py-2 text-[#eaf2ea] outline-none focus:border-[#81aa69]"
+                />
+              </div>
+
+              {/* Quantity input field */}
+              <div className="mt-4">
+                <label
+                  htmlFor="item-quantity"
+                  className="mb-2 block text-sm font-medium"
+                >
+                  Quantity
+                </label>
+
+                <input
+                  id="item-quantity"
+                  type="number"
+                  min="0.01"
+                  step="any"
+                  value={itemQuantity}
+                  onChange={(event) => setItemQuantity(event.target.value)}
+                  required
+                  className="w-full rounded-md border border-[#304235] bg-[#101713] px-3 py-2 text-[#eaf2ea] outline-none focus:border-[#81aa69]"
+                />
+              </div>
+
+              {/* Unit input field */}
+              <div className="mt-4">
+                <label
+                  htmlFor="item-unit"
+                  className="mb-2 block text-sm font-medium"
+                >
+                  Unit
+                </label>
+
+                <select
+                  id="item-unit"
+                  value={itemUnit}
+                  onChange={(event) => setItemUnit(event.target.value)}
+                  className="w-full rounded-md border border-[#304235] bg-[#101713] px-3 py-2 text-[#eaf2ea] outline-none focus:border-[#81aa69]"
+                >
+                  <option value="pieces">Pieces</option>
+                  <option value="gallons">Gallons</option>
+                  <option value="liters">Liters</option>
+                  <option value="pounds">Pounds</option>
+                  <option value="ounces">Ounces (weight)</option>
+                  <option value="fluid_ounces">Fluid Ounces (volume)</option>
+                </select>
+              </div>
+
+              {/* Category input field */}
+              <div className="mt-4">
+                <label
+                  htmlFor="item-category"
+                  className="mb-2 block text-sm font-medium"
+                >
+                  Category
+                </label>
+
+                <select
+                  id="item-category"
+                  value={itemCategory}
+                  onChange={(event) => setItemCategory(event.target.value)}
+                  className="w-full rounded-md border border-[#304235] bg-[#101713] px-3 py-2 text-[#eaf2ea] outline-none focus:border-[#81aa69]"
+                >
+                  {categories
+                    .filter((category) => category !== "All Supplies")
+                    .map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              {/* Cancel and Save buttons */}
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={closeAddModal}
+                  className="rounded-md border border-[#304235] px-4 py-2 text-sm text-[#b5c6b7] hover:bg-[#304235]"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="rounded-md bg-[#b6db8a] px-4 py-2 text-sm font-semibold text-[#101713] hover:bg-[#c9eca0]"
+                >
+                  Save Item
+                </button>
+              </div>
+
+            </form>
+
+
+
+
+
 
           </div>
         </div>
       )}
+
+
+
+
+
+
+
+      
     </main>
   )
 }
