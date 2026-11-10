@@ -16,19 +16,19 @@ const REQUIREMENTS = {
   },
   first_aid: {
     label: 'first aid kit', kind: 'essential', minimum: 1,
-    unit: 'kits', weight: 2, critical: true, counts: ['first_aid_kit']
+    unit: 'pieces', weight: 2, critical: true, counts: ['first_aid_kit']
   },
   lighting: {
     label: 'flashlight', kind: 'essential', minimum: 1,
-    unit: 'items', weight: 1, critical: false, counts: ['flashlight']
+    unit: 'pieces', weight: 1, critical: false, counts: ['flashlight']
   },
   radio: {
     label: 'emergency radio', kind: 'essential', minimum: 1,
-    unit: 'items', weight: 1, critical: false, counts: ['radio']
+    unit: 'pieces', weight: 1, critical: false, counts: ['radio']
   },
   power: {
     label: 'battery pack', kind: 'essential', minimum: 1,
-    unit: 'items', weight: 1, critical: false, counts: ['battery_pack']
+    unit: 'pieces', weight: 1, critical: false, counts: ['battery_pack']
   }
 };
 

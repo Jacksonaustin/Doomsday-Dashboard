@@ -1,18 +1,20 @@
 // Each unit's number converts it into the resource type's base unit.
-const LIQUID_UNITS = { gallons: 1, liters: 0.264172, fl_oz: 1 / 128 };
+// Unit names match the inventory page's dropdown (gallons, liters, fluid_ounces, pieces).
+const LIQUID_UNITS = { gallons: 1, liters: 0.264172, fluid_ounces: 1 / 128 };
+const COUNTED = { pieces: 1 };
 
 const RESOURCE_TYPES = {
   water: { category: 'liquid', baseUnit: 'gallons', units: LIQUID_UNITS },
   drink: { category: 'liquid', baseUnit: 'gallons', units: LIQUID_UNITS },
   meal: { category: 'food', baseUnit: 'meals', units: { meals: 1 } },
-  first_aid_kit: { category: 'medical', baseUnit: 'kits', units: { kits: 1 } },
+  first_aid_kit: { category: 'medical', baseUnit: 'pieces', units: COUNTED },
   medication: { category: 'medical', baseUnit: 'days', units: { days: 1 } },
-  flashlight: { category: 'power', baseUnit: 'items', units: { items: 1 } },
-  battery_pack: { category: 'power', baseUnit: 'items', units: { items: 1 } },
-  radio: { category: 'tools', baseUnit: 'items', units: { items: 1 } },
-  shelter: { category: 'shelter', baseUnit: 'items', units: { items: 1 } },
-  sanitation: { category: 'hygiene', baseUnit: 'items', units: { items: 1 } },
-  other: { category: 'other', baseUnit: 'items', units: { items: 1 } }
+  flashlight: { category: 'power', baseUnit: 'pieces', units: COUNTED },
+  battery_pack: { category: 'power', baseUnit: 'pieces', units: COUNTED },
+  radio: { category: 'tools', baseUnit: 'pieces', units: COUNTED },
+  shelter: { category: 'shelter', baseUnit: 'pieces', units: COUNTED },
+  sanitation: { category: 'hygiene', baseUnit: 'pieces', units: COUNTED },
+  other: { category: 'other', baseUnit: 'pieces', units: COUNTED }
 };
 
 module.exports = { RESOURCE_TYPES };
