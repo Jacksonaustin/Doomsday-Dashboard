@@ -174,5 +174,10 @@ reports whether the API can reach MongoDB. Accounts can be created with
 with `POST /api/auth/login` (`email` and `password`). Successful registration
 and login issue an HTTP-only session cookie; `GET /api/auth/me` verifies it and
 `POST /api/auth/logout` clears it. The inventory page redirects to sign-in when
-there is no valid session. Unknown routes return a JSON 404 response. Run the
-backend test command with `npm test`.
+there is no valid session. Authenticated users can list and add inventory with
+`GET /api/inventory` and `POST /api/inventory`, update an item with
+`PUT /api/inventory/:id`, or delete one with `DELETE /api/inventory/:id`.
+Inventory items require a name, positive quantity, resource type, and supported
+unit; items are scoped to their owner and use the same resource types as disaster
+simulations. Unknown routes return a JSON 404 response. Run the backend test
+command with `npm test`.

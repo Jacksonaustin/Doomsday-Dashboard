@@ -10,6 +10,8 @@ const inventoryItemSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true, maxlength: 100 },
     // What the gap engine counts. The user picks it from a dropdown.
     resourceType: { type: String, required: true, enum: Object.keys(RESOURCE_TYPES) },
+    // Generic "other" supplies keep the display category selected by the user.
+    category: { type: String, enum: CATEGORIES, required: true },
     quantity: { type: Number, required: true, min: 0 },
     unit: {
       type: String,
@@ -32,11 +34,6 @@ const inventoryItemSchema = new mongoose.Schema(
   },
   { timestamps: true, toJSON: { virtuals: true } }
 );
-
-// Worked out from resourceType, so an item can't be saved under the wrong category.
-inventoryItemSchema.virtual('category').get(function () {
-  return RESOURCE_TYPES[this.resourceType]?.category;
-});
 
 // The gap engine and inventory list both look items up by user.
 inventoryItemSchema.index({ userId: 1, resourceType: 1 });

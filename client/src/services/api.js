@@ -26,4 +26,24 @@ export async function logoutUser() {
   return response.data
 }
 
+export async function getInventoryItems() {
+  const response = await api.get('/inventory')
+  return response.data
+}
+
+export async function createInventoryItem(item) {
+  const response = await api.post('/inventory', item)
+  return response.data
+}
+
+export async function updateInventoryItem(id, item) {
+  const response = await api.put(`/inventory/${id}`, item)
+  return response.data
+}
+
+export async function deleteInventoryItem(id) {
+  const response = await api.delete(`/inventory/${id}`)
+  return response.data
+}
+
 export default api
