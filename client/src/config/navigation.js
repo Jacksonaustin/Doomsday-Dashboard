@@ -3,6 +3,7 @@
 export const publicNavItems = [
   { label: 'Home', to: '/' },
   { label: 'Inventory', to: '/inventory' },
+    { label: 'Scenarios', to: '/scenarios' },
 
 ]
 
