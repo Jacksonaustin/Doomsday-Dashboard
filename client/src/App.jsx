@@ -8,6 +8,7 @@ import AuthPage from './pages/AuthPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import InventoryPage from './pages/Inventory.jsx'
 import ScenariosPage from './pages/Scenarios.jsx'
+import ProfilePage from './pages/Profile.jsx'
 
 function ScrollToLocation() {
   const { pathname, hash } = useLocation()
@@ -51,6 +52,15 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+
           <Route
             path="/login"
             element={
