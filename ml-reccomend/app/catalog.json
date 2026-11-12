@@ -1,0 +1,254 @@
+[
+  {
+    "id": "water-store-supply",
+    "category": "water",
+    "title": "Store at least one gallon of water per person per day",
+    "explanation": "Keep enough for every person for the length of the emergency: about half for drinking and half for cooking and hygiene.",
+    "text": "not enough drinking water, water shortage, gallons of water needed per person, store bottled water"
+  },
+  {
+    "id": "water-purify",
+    "category": "water",
+    "title": "Keep a way to purify water",
+    "explanation": "Water purification tablets, unscented bleach or a portable filter let you make tap or collected water safe if your stored supply runs out.",
+    "text": "drinking water running low, need clean safe water, purify or filter water, contaminated water supply"
+  },
+  {
+    "id": "water-sanitation-reserve",
+    "category": "water",
+    "title": "Set aside extra water for washing and sanitation",
+    "explanation": "Fill clean containers or a bathtub before a storm so you have water for flushing, washing hands and cleaning without using drinking water.",
+    "text": "sanitation water shortage, water for washing hygiene flushing cleaning, not enough water for sanitation"
+  },
+  {
+    "id": "food-shelf-stable",
+    "category": "food",
+    "title": "Build a supply of shelf-stable food",
+    "explanation": "Canned goods, peanut butter, dried fruit and ready-to-eat meals last for years and need no refrigeration or cooking.",
+    "text": "not enough food, food shortage, meals needed per person, stock non-perishable canned food"
+  },
+  {
+    "id": "food-no-cook",
+    "category": "food",
+    "title": "Choose foods that need no cooking",
+    "explanation": "During a power outage you may not be able to cook, so include foods you can eat straight from the package.",
+    "text": "food supply for power outage, meals without cooking, ready to eat food, no electricity to cook"
+  },
+  {
+    "id": "food-manual-opener",
+    "category": "food",
+    "title": "Keep a manual can opener with your food",
+    "explanation": "Canned food is only useful if you can open it without electricity.",
+    "text": "canned food storage, open cans without power, food preparation tools"
+  },
+  {
+    "id": "medical-first-aid-kit",
+    "category": "medical",
+    "title": "Keep a stocked first aid kit",
+    "explanation": "Include bandages, gauze, antiseptic, pain relievers, gloves and any items your household needs. Check it twice a year.",
+    "text": "no first aid kit, missing first aid supplies, medical kit, bandages and injury treatment"
+  },
+  {
+    "id": "medical-prescriptions",
+    "category": "medical",
+    "title": "Keep an extra supply of prescription medication",
+    "explanation": "Ask your doctor or pharmacist about keeping a backup supply, and store a list of every medication and dose.",
+    "text": "medication running out, prescription medicine supply, medical needs, days of medication"
+  },
+  {
+    "id": "medical-records",
+    "category": "medical",
+    "title": "Store copies of medical information",
+    "explanation": "Keep allergies, medications, insurance details and emergency contacts in a waterproof bag.",
+    "text": "medical information records, allergies and medication list, health documents in an emergency"
+  },
+  {
+    "id": "communication-radio",
+    "category": "communication",
+    "title": "Get a battery or hand-crank emergency radio",
+    "explanation": "A NOAA weather radio keeps you informed when the power, internet or cell service is down.",
+    "text": "no emergency radio, missing weather radio, emergency alerts and news without power, communication"
+  },
+  {
+    "id": "communication-plan",
+    "category": "communication",
+    "title": "Make a household communication plan",
+    "explanation": "Agree on an out-of-area contact and a meeting place, and write phone numbers down in case phones die.",
+    "text": "family communication plan, contact household members in an emergency, emergency contacts and meeting place"
+  },
+  {
+    "id": "communication-phone-charging",
+    "category": "communication",
+    "title": "Have a way to charge phones without power",
+    "explanation": "A charged power bank or car charger keeps phones working for alerts and calls.",
+    "text": "charge phone during power outage, phone battery, stay connected, communication without electricity"
+  },
+  {
+    "id": "lighting-flashlights",
+    "category": "lighting",
+    "title": "Keep a flashlight for each person",
+    "explanation": "LED flashlights or headlamps are safer than candles. Store them where you can find them in the dark.",
+    "text": "no flashlight, missing lighting, light during power outage, flashlights and headlamps"
+  },
+  {
+    "id": "lighting-batteries",
+    "category": "lighting",
+    "title": "Store spare batteries for every device",
+    "explanation": "Check which sizes your flashlights and radio use, and replace stored batteries once a year.",
+    "text": "spare batteries for flashlight and radio, battery supply, lighting needs batteries"
+  },
+  {
+    "id": "lighting-lanterns",
+    "category": "lighting",
+    "title": "Add a battery-powered lantern",
+    "explanation": "A lantern lights a whole room, which helps during a long outage.",
+    "text": "room lighting for long power outage, lantern, area light, lighting for several days"
+  },
+  {
+    "id": "power-battery-pack",
+    "category": "power",
+    "title": "Keep a charged battery pack or power station",
+    "explanation": "A portable power station can run small devices and medical equipment during a long outage. Recharge it every few months.",
+    "text": "no battery pack, missing backup power, power station, electricity during long power outage"
+  },
+  {
+    "id": "power-generator-safety",
+    "category": "power",
+    "title": "Use generators safely, outdoors only",
+    "explanation": "Never run a generator indoors or in a garage. Keep it at least 20 feet from windows and use a carbon monoxide alarm.",
+    "text": "generator for power outage, backup electricity, carbon monoxide safety, power source"
+  },
+  {
+    "id": "power-solar-charger",
+    "category": "power",
+    "title": "Add a solar charger",
+    "explanation": "A small solar panel can recharge phones and battery packs when the grid is down for days.",
+    "text": "recharge devices without electricity, solar power, long term power outage, charging"
+  },
+  {
+    "id": "sanitation-hygiene-kit",
+    "category": "sanitation",
+    "title": "Pack a hygiene and sanitation kit",
+    "explanation": "Include soap, hand sanitizer, wet wipes, toilet paper, garbage bags and feminine supplies.",
+    "text": "sanitation supplies, hygiene kit, soap hand sanitizer toilet paper, cleanliness in an emergency"
+  },
+  {
+    "id": "sanitation-waste",
+    "category": "sanitation",
+    "title": "Plan for toilets without running water",
+    "explanation": "Heavy-duty bags, a bucket and cat litter or sawdust make an emergency toilet if water or sewer service stops.",
+    "text": "toilet without water, waste disposal, sewage, sanitation when water service stops, flood"
+  },
+  {
+    "id": "sanitation-cleaning",
+    "category": "sanitation",
+    "title": "Keep cleaning and disinfecting supplies",
+    "explanation": "Unscented bleach and gloves help clean up safely, especially after flooding.",
+    "text": "disinfect and clean up after flood, cleaning supplies, bleach, prevent illness"
+  },
+  {
+    "id": "shelter-safe-room",
+    "category": "shelter",
+    "title": "Pick a safe room for storms",
+    "explanation": "For tornadoes, use a basement or an interior room on the lowest floor with no windows.",
+    "text": "tornado shelter, safe place in the house, storm protection, shelter in place"
+  },
+  {
+    "id": "shelter-warmth",
+    "category": "shelter",
+    "title": "Keep blankets and warm clothing",
+    "explanation": "Sleeping bags, wool blankets and layers keep everyone warm if the heat goes out in a winter storm.",
+    "text": "staying warm without heat, winter storm, blankets and warm clothing, cold weather shelter"
+  },
+  {
+    "id": "shelter-go-bag",
+    "category": "shelter",
+    "title": "Pack a go-bag for evacuation",
+    "explanation": "A bag with water, food, medication, documents and clothes lets you leave quickly if you must evacuate.",
+    "text": "evacuation bag, leave home quickly, flood evacuation, emergency kit to go"
+  },
+  {
+    "id": "outage-food-fridge-safety",
+    "category": "food",
+    "title": "Keep the fridge and freezer closed during an outage",
+    "explanation": "A closed refrigerator keeps food safe for about 4 hours. A full freezer lasts about 48 hours, or 24 if half full. Throw out perishable food that has been above 40°F for more than 2 hours.",
+    "text": "food spoiling in the refrigerator during a long power outage, freezer food safety without electricity, perishable food going bad"
+  },
+  {
+    "id": "outage-food-outdoor-cooking",
+    "category": "food",
+    "title": "Have a safe way to cook outdoors",
+    "explanation": "A camp stove or grill lets you cook during a long outage. Only use them outside, away from doors and windows, because of carbon monoxide.",
+    "text": "cooking food during an extended power outage, no electric stove, camp stove or grill outdoors, hot meals without power"
+  },
+  {
+    "id": "outage-water-pump",
+    "category": "water",
+    "title": "Plan for water if pumps stop working",
+    "explanation": "Well pumps need electricity, and city water pressure can drop in a long outage. Store extra water and know where to get more.",
+    "text": "no running water during a long power outage, well pump without electricity, water pressure lost, extended outage water supply"
+  },
+  {
+    "id": "outage-water-boil",
+    "category": "water",
+    "title": "Follow boil-water notices",
+    "explanation": "If officials issue a boil-water notice, bring water to a rolling boil for at least 1 minute before drinking or cooking with it.",
+    "text": "boil water advisory after power outage, unsafe tap water, make drinking water safe, water treatment plant without power"
+  },
+  {
+    "id": "outage-medical-refrigerated",
+    "category": "medical",
+    "title": "Plan for medications that need refrigeration",
+    "explanation": "Ask your pharmacist how long medications like insulin stay effective without refrigeration. Keep a cooler and ice packs ready.",
+    "text": "medication needs refrigeration during a power outage, insulin without electricity, keep medicine cold in a long outage"
+  },
+  {
+    "id": "outage-medical-equipment",
+    "category": "medical",
+    "title": "Have backup power for medical equipment",
+    "explanation": "If anyone uses a CPAP, oxygen concentrator or other powered device, keep a backup battery. Ask your utility about registering as a medical priority customer.",
+    "text": "medical equipment needs electricity, CPAP or oxygen during a power outage, powered medical device backup battery"
+  },
+  {
+    "id": "outage-power-fuel",
+    "category": "power",
+    "title": "Store generator fuel safely",
+    "explanation": "Keep fuel in approved containers outside your living space, away from heat. Rotate it every few months so it stays usable.",
+    "text": "fuel for a generator during an extended power outage, gasoline storage, run backup power for several days"
+  },
+  {
+    "id": "outage-power-charge-early",
+    "category": "power",
+    "title": "Charge everything while you still have power",
+    "explanation": "When an outage is forecast, charge phones, battery packs and rechargeable lights. Unplug electronics to protect them from power surges when it returns.",
+    "text": "prepare for a forecast power outage, charge devices before the power goes out, power surge when electricity returns"
+  },
+  {
+    "id": "outage-lighting-rechargeable",
+    "category": "lighting",
+    "title": "Add rechargeable or solar lights for long outages",
+    "explanation": "Over many days, rechargeable or solar lanterns save batteries. Avoid candles, which are a fire risk.",
+    "text": "lighting for an extended power outage, many days without electricity, rechargeable solar lantern, avoid candles"
+  },
+  {
+    "id": "outage-communication-updates",
+    "category": "communication",
+    "title": "Track the outage and save phone battery",
+    "explanation": "Check your utility's outage map and sign up for its alerts. Text instead of calling, and lower screen brightness to make your battery last.",
+    "text": "updates during a long power outage, utility outage map and alerts, save phone battery, how long will the outage last"
+  },
+  {
+    "id": "outage-shelter-heat",
+    "category": "shelter",
+    "title": "Stay cool in a summer outage",
+    "explanation": "Without air conditioning, close blinds, drink plenty of water and use the lowest floor. Find your nearest cooling center in case it gets too hot.",
+    "text": "extreme heat during a power outage, no air conditioning, staying cool without electricity, cooling center"
+  },
+  {
+    "id": "outage-shelter-cold",
+    "category": "shelter",
+    "title": "Heat your home safely in a winter outage",
+    "explanation": "Never use a gas oven, stove or grill to heat your home. Gather everyone in one room, close off others and use extra layers.",
+    "text": "no heat during a winter power outage, staying warm without electricity, unsafe heating, carbon monoxide from heaters"
+  }
+]
