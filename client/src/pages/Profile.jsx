@@ -1,19 +1,29 @@
+
 import { useState } from 'react'
 import useAuth from '../context/useAuth.js'
 
 export default function ProfilePage() {
   const { user } = useAuth()
 
-  // Temporary household data for the frontend
-  const [household] = useState({
+  // Temporary household data for frontend development
+  const [household, setHousehold] = useState({
     adults: 2,
     children: 1,
     infants: 1,
     pets: 1
   })
 
-  // Calculate the number of people in the household
-  const totalPeople = household.adults + household.children + household.infants
+  // Calculate total people (pets are excluded)
+  const totalPeople =
+    household.adults + household.children + household.infants
+
+  // Increase or decrease a household category
+  function updateHousehold(category, change) {
+    setHousehold((current) => ({
+      ...current,
+      [category]: Math.max(0, current[category] + change)
+    }))
+  }
 
   return (
     <main className="min-h-screen bg-[#101713] text-[#eaf2ea]">
@@ -57,81 +67,172 @@ export default function ProfilePage() {
               </div>
 
             </div>
-
-            {/* Account actions */}
-            <div className="mt-6 flex flex-wrap gap-3 border-t border-[#304235] pt-4">
-              <button
-                type="button"
-                className="cursor-pointer rounded-md border border-[#405a45] px-4 py-2 text-sm font-medium text-[#b6db8a] transition-colors hover:bg-[#304235]"
-              >
-                Edit Account
-              </button>
-
-              <button
-                type="button"
-                className="cursor-pointer rounded-md border border-[#405a45] px-4 py-2 text-sm font-medium text-[#b6db8a] transition-colors hover:bg-[#304235]"
-              >
-                Change Password
-              </button>
-            </div>
           </section>
 
-          
-        {/* Household overview */}
-        <section className="rounded-xl border border-[#304235] bg-[#18231c] p-6">
-        <h2 className="text-xl font-semibold">
-            Household Overview
-        </h2>
+          {/* Household overview */}
+          <section className="rounded-xl border border-[#304235] bg-[#18231c] p-6">
+            <h2 className="text-xl font-semibold">
+              Household Overview
+            </h2>
 
-        {/* Total household members */}
-        <div className="mt-6 rounded-lg bg-[#243329] p-4 text-center">
-            <p className="text-3xl font-bold text-[#b6db8a]">
-            {totalPeople}
-            </p>
+            {/* Total household members */}
+            <div className="mt-6 rounded-lg bg-[#243329] p-4 text-center">
+              <p className="text-3xl font-bold text-[#b6db8a]">
+                {totalPeople}
+              </p>
 
-            <p className="mt-1 text-sm text-[#b5c6b7]">
-            Total People
-            </p>
+              <p className="mt-1 text-sm text-[#b5c6b7]">
+                Total People
+              </p>
+            </div>
+
+            {/* Household category breakdown */}
+            <div className="mt-3 grid grid-cols-3 gap-3">
+
+              {/* Adults */}
+              <div className="rounded-lg bg-[#243329] p-4 text-center">
+                <p className="text-2xl font-bold text-[#b6db8a]">
+                  {household.adults}
+                </p>
+
+                <p className="mt-1 text-sm text-[#b5c6b7]">
+                  Adults
+                </p>
+              </div>
+
+              {/* Children */}
+              <div className="rounded-lg bg-[#243329] p-4 text-center">
+                <p className="text-2xl font-bold text-[#b6db8a]">
+                  {household.children}
+                </p>
+
+                <p className="mt-1 text-sm text-[#b5c6b7]">
+                  Children
+                </p>
+              </div>
+
+              {/* Infants */}
+              <div className="rounded-lg bg-[#243329] p-4 text-center">
+                <p className="text-2xl font-bold text-[#b6db8a]">
+                  {household.infants}
+                </p>
+
+                <p className="mt-1 text-sm text-[#b5c6b7]">
+                  Infants
+                </p>
+              </div>
+
+            </div>
+          </section>
         </div>
 
-        {/* Household category breakdown */}
-        <div className="mt-3 grid grid-cols-3 gap-3">
+        {/* Household composition */}
+        <section className="mt-6 rounded-xl border border-[#304235] bg-[#18231c] p-6">
+          <h2 className="text-xl font-semibold">
+            Household Composition
+          </h2>
 
-            {/* Adults */}
-            <div className="rounded-lg bg-[#243329] p-4 text-center">
-            <p className="text-2xl font-bold text-[#b6db8a]">
-                {household.adults}
-            </p>
-            <p className="mt-1 text-sm text-[#b5c6b7]">
-                Adults
-            </p>
-            </div>
+          <p className="mt-2 text-sm text-[#b5c6b7]">
+            Adjust the number of people in your household.
+          </p>
 
-            {/* Children */}
-            <div className="rounded-lg bg-[#243329] p-4 text-center">
-            <p className="text-2xl font-bold text-[#b6db8a]">
-                {household.children}
-            </p>
-            <p className="mt-1 text-sm text-[#b5c6b7]">
-                Children
-            </p>
-            </div>
+          {/* Household counters */}
+          <div className="mt-6 space-y-3">
+            {[
+              { key: 'adults', label: 'Adults' },
+              { key: 'children', label: 'Children' },
+              { key: 'infants', label: 'Infants' }
+            ].map((category) => (
+              <div
+                key={category.key}
+                className="flex items-center justify-between rounded-xl border border-[#304235] bg-[#101713] p-4"
+              >
+                <span className="font-medium">
+                  {category.label}
+                </span>
 
-            {/* Infants */}
-            <div className="rounded-lg bg-[#243329] p-4 text-center">
-            <p className="text-2xl font-bold text-[#b6db8a]">
-                {household.infants}
-            </p>
-            <p className="mt-1 text-sm text-[#b5c6b7]">
-                Infants
-            </p>
-            </div>
+                <div className="flex items-center gap-4">
 
-        </div>
+                  {/* Decrease count */}
+                  <button
+                    type="button"
+                    onClick={() => updateHousehold(category.key, -1)}
+                    disabled={household[category.key] === 0}
+                    aria-label={`Decrease ${category.label}`}
+                    className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#405a45] text-xl hover:bg-[#304235] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    -
+                  </button>
+
+                  {/* Current count */}
+                  <span className="min-w-8 text-center text-xl font-semibold">
+                    {household[category.key]}
+                  </span>
+
+                  {/* Increase count */}
+                  <button
+                    type="button"
+                    onClick={() => updateHousehold(category.key, 1)}
+                    aria-label={`Increase ${category.label}`}
+                    className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#405a45] text-xl hover:bg-[#304235]"
+                  >
+                    +
+                  </button>
+
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
 
+        {/* Pets section */}
+        <section className="mt-6 rounded-xl border border-[#304235] bg-[#18231c] p-6">
+          <h2 className="text-xl font-semibold">
+            Pets
+          </h2>
 
-        </div>
+          <p className="mt-2 text-sm text-[#b5c6b7]">
+            Include pets in your household preparedness planning.
+          </p>
+
+          {/* Pet counter */}
+          <div className="mt-6 flex items-center justify-between rounded-xl border border-[#304235] bg-[#101713] p-4">
+            <span className="font-medium">
+              Number of Pets
+            </span>
+
+            <div className="flex items-center gap-4">
+
+              {/* Decrease pets */}
+              <button
+                type="button"
+                onClick={() => updateHousehold('pets', -1)}
+                disabled={household.pets === 0}
+                aria-label="Decrease pets"
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#405a45] text-xl hover:bg-[#304235] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                -
+              </button>
+
+              {/* Current pet count */}
+              <span className="min-w-8 text-center text-xl font-semibold">
+                {household.pets}
+              </span>
+
+              {/* Increase pets */}
+              <button
+                type="button"
+                onClick={() => updateHousehold('pets', 1)}
+                aria-label="Increase pets"
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#405a45] text-xl hover:bg-[#304235]"
+              >
+                +
+              </button>
+
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
   )
