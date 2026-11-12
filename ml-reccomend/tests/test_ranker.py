@@ -63,6 +63,24 @@ def test_results_are_capped_and_sorted_by_confidence(semantic):
     assert recommendations[0]["confidence"] >= recommendations[1]["confidence"]
 
 
+@pytest.mark.parametrize(
+    "resource, description",
+    [
+        ("drinking_water", "Household of 4 has 3 of 28 gallons of drinking water needed for a 14-day long-term power outage."),
+        ("food", FOOD),
+        ("first_aid", "Household of 4 has 0 of 1 pieces of first aid kit needed for a 14-day long-term power outage."),
+    ],
+)
+def test_long_power_outages_include_outage_specific_advice(semantic, resource, description):
+    ids = [r["id"] for r in semantic.rank(description, resource=resource)["recommendations"]]
+    assert any(i.startswith("outage-") for i in ids), ids
+
+
+def test_short_disasters_still_lead_with_general_advice(semantic):
+    result = semantic.rank(DRINKING, resource="drinking_water")  # 3-day tornado
+    assert not result["recommendations"][0]["id"].startswith("outage-")
+
+
 @pytest.mark.parametrize("ranker_name", ["semantic", "tfidf"])
 def test_unrelated_text_is_flagged_low_confidence(request, ranker_name):
     result = request.getfixturevalue(ranker_name).rank("The quarterly sales report is due on Friday.")

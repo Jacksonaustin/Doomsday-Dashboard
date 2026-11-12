@@ -10,3 +10,10 @@ npm-debug.log*
 # Build and coverage output
 dist/
 coverage/
+
+#AI Reccomendation 
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+
