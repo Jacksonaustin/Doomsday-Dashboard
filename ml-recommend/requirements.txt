@@ -1,6 +1,6 @@
-fastapi
-uvicorn[standard]
-sentence-transformers
-scikit-learn
-pytest
-httpx
+fastapi==0.162.5
+uvicorn[standard]==0.54.0
+sentence-transformers==6.3.0
+scikit-learn==1.9.1
+pytest==9.2.0
+httpx==0.28.1
