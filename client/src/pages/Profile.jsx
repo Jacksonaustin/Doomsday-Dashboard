@@ -1,8 +1,19 @@
-
+import { useState } from 'react'
 import useAuth from '../context/useAuth.js'
 
 export default function ProfilePage() {
   const { user } = useAuth()
+
+  // Temporary household data for the frontend
+  const [household] = useState({
+    adults: 2,
+    children: 1,
+    infants: 1,
+    pets: 1
+  })
+
+  // Calculate the number of people in the household
+  const totalPeople = household.adults + household.children + household.infants
 
   return (
     <main className="min-h-screen bg-[#101713] text-[#eaf2ea]">
@@ -65,12 +76,60 @@ export default function ProfilePage() {
             </div>
           </section>
 
-          {/* Household overview */}
-          <section className="rounded-xl border border-[#304235] bg-[#18231c] p-6">
-            <h2 className="text-xl font-semibold">
-              Household Overview
-            </h2>
-          </section>
+          
+        {/* Household overview */}
+        <section className="rounded-xl border border-[#304235] bg-[#18231c] p-6">
+        <h2 className="text-xl font-semibold">
+            Household Overview
+        </h2>
+
+        {/* Total household members */}
+        <div className="mt-6 rounded-lg bg-[#243329] p-4 text-center">
+            <p className="text-3xl font-bold text-[#b6db8a]">
+            {totalPeople}
+            </p>
+
+            <p className="mt-1 text-sm text-[#b5c6b7]">
+            Total People
+            </p>
+        </div>
+
+        {/* Household category breakdown */}
+        <div className="mt-3 grid grid-cols-3 gap-3">
+
+            {/* Adults */}
+            <div className="rounded-lg bg-[#243329] p-4 text-center">
+            <p className="text-2xl font-bold text-[#b6db8a]">
+                {household.adults}
+            </p>
+            <p className="mt-1 text-sm text-[#b5c6b7]">
+                Adults
+            </p>
+            </div>
+
+            {/* Children */}
+            <div className="rounded-lg bg-[#243329] p-4 text-center">
+            <p className="text-2xl font-bold text-[#b6db8a]">
+                {household.children}
+            </p>
+            <p className="mt-1 text-sm text-[#b5c6b7]">
+                Children
+            </p>
+            </div>
+
+            {/* Infants */}
+            <div className="rounded-lg bg-[#243329] p-4 text-center">
+            <p className="text-2xl font-bold text-[#b6db8a]">
+                {household.infants}
+            </p>
+            <p className="mt-1 text-sm text-[#b5c6b7]">
+                Infants
+            </p>
+            </div>
+
+        </div>
+        </section>
+
 
         </div>
       </div>
