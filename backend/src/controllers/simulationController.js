@@ -1,4 +1,5 @@
 const simulationServices = require('../services/simulationServices');
+const recommendationServices = require('../services/recommendationServices');
 
 function scenarios(req, res) {
   res.status(200).json({
@@ -35,4 +36,16 @@ async function getOne(req, res, next) {
   }
 }
 
-module.exports = { getOne, list, run, scenarios };
+async function recommendations(req, res, next) {
+  try {
+    const data = await recommendationServices.getRecommendations(req.auth.userId, req.params.id);
+    const message = data.source === 'fallback'
+      ? 'Recommendations are unavailable right now, so general advice is shown'
+      : 'Recommendations loaded';
+    res.status(200).json({ success: true, data, message });
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = { getOne, list, recommendations, run, scenarios };
