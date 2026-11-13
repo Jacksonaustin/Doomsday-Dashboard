@@ -1,0 +1,47 @@
+[
+  {
+    "resource": "drinking_water",
+    "description": "Household of 4 has 2 of 6 gallons of drinking water needed for a 3-day tornado.",
+    "good": ["water-store-supply"]
+  },
+  {
+    "resource": "drinking_water",
+    "description": "Household of 2 has 0 of 14 gallons of drinking water needed for a 14-day long-term power outage.",
+    "good": ["water-store-supply", "outage-water-pump"]
+  },
+  {
+    "resource": "sanitation_water",
+    "description": "Household of 4 has 0 of 28 gallons of sanitation water needed for a 14-day long-term power outage.",
+    "good": ["water-sanitation-reserve", "sanitation-waste", "sanitation-hygiene-kit"]
+  },
+  {
+    "resource": "sanitation_water",
+    "description": "Household of 3 has 1 of 4.5 gallons of sanitation water needed for a 3-day flood.",
+    "good": ["water-sanitation-reserve", "sanitation-waste", "sanitation-hygiene-kit"]
+  },
+  {
+    "resource": "food",
+    "description": "Household of 4 has 20 of 168 meals of food needed for a 14-day long-term power outage.",
+    "good": ["food-shelf-stable", "food-no-cook"]
+  },
+  {
+    "resource": "first_aid",
+    "description": "Household of 1 has 0 of 1 pieces of first aid kit needed for a 7-day winter storm.",
+    "good": ["medical-first-aid-kit"]
+  },
+  {
+    "resource": "lighting",
+    "description": "Household of 5 has 0 of 1 pieces of flashlight needed for a 3-day tornado.",
+    "good": ["lighting-flashlights"]
+  },
+  {
+    "resource": "radio",
+    "description": "Household of 2 has 0 of 1 pieces of emergency radio needed for a 3-day flood.",
+    "good": ["communication-radio"]
+  },
+  {
+    "resource": "power",
+    "description": "Household of 4 has 0 of 1 pieces of battery pack needed for a 14-day long-term power outage.",
+    "good": ["power-battery-pack", "outage-power-charge-early"]
+  }
+]

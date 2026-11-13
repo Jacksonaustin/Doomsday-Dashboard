@@ -4,7 +4,7 @@
     "category": "water",
     "title": "Store at least one gallon of water per person per day",
     "explanation": "Keep enough for every person for the length of the emergency: about half for drinking and half for cooking and hygiene.",
-    "text": "not enough drinking water, water shortage, gallons of water needed per person, store bottled water"
+    "text": "not enough drinking water, drinking water shortage, store bottled drinking water for each person, water to drink"
   },
   {
     "id": "water-purify",
@@ -18,7 +18,7 @@
     "category": "water",
     "title": "Set aside extra water for washing and sanitation",
     "explanation": "Fill clean containers or a bathtub before a storm so you have water for flushing, washing hands and cleaning without using drinking water.",
-    "text": "sanitation water shortage, water for washing hygiene flushing cleaning, not enough water for sanitation"
+    "text": "sanitation water shortage, not enough water for flushing toilets, washing, bathing and cleaning, extra water for hygiene during a power outage, storm or flood"
   },
   {
     "id": "food-shelf-stable",
@@ -130,14 +130,14 @@
     "category": "sanitation",
     "title": "Pack a hygiene and sanitation kit",
     "explanation": "Include soap, hand sanitizer, wet wipes, toilet paper, garbage bags and feminine supplies.",
-    "text": "sanitation supplies, hygiene kit, soap hand sanitizer toilet paper, cleanliness in an emergency"
+    "text": "sanitation and hygiene supplies, soap hand sanitizer toilet paper wet wipes, staying clean without running water in an emergency"
   },
   {
     "id": "sanitation-waste",
     "category": "sanitation",
     "title": "Plan for toilets without running water",
     "explanation": "Heavy-duty bags, a bucket and cat litter or sawdust make an emergency toilet if water or sewer service stops.",
-    "text": "toilet without water, waste disposal, sewage, sanitation when water service stops, flood"
+    "text": "no water to flush the toilet, emergency toilet, waste disposal, sewage, sanitation during a power outage, storm or flood when water service stops"
   },
   {
     "id": "sanitation-cleaning",
