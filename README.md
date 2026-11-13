@@ -165,7 +165,7 @@ Before starting, copy `backend/.env.example` to `backend/.env` (use
 `Copy-Item backend/.env.example backend/.env` in PowerShell or
 `cp backend/.env.example backend/.env` on macOS/Linux). Update `MONGO_URI` if
 MongoDB is not using the local default. Replace `JWT_SECRET` with a random value
-at least 32 characters long. The API starts on port `5000` by default; set
+at least 32 characters long. The API starts on port `5050` (had to change from 5000 to 5050 since mac uses 5000 for airplay) by default; set
 `PORT` to change it.
 
 The initial readiness endpoint is `GET http://localhost:5000/api/health`. It

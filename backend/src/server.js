@@ -5,7 +5,7 @@ const connectDatabase = require('./config/database');
 const { getJwtSecret } = require('./config/auth');
 const mongoose = require('mongoose');
 
-const port = Number(process.env.PORT) || 5000;
+const port = Number(process.env.PORT) || 5050;
 let server;
 let shuttingDown = false;
 
