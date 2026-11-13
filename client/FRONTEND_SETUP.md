@@ -41,7 +41,7 @@ The existing backend only has `GET /api/health` at this stage. Forms propose the
 - `POST /api/auth/login` with `{ email, password }`
 - `POST /api/auth/register` with `{ name, email, password }`
 
-The frontend's Axios client is in `src/services/api.js`. Vite proxies `/api` to `http://localhost:5000` in development. If those endpoints aren't implemented yet, forms show an honest error; they **do not simulate a successful login or store fake accounts**.
+The frontend's Axios client is in `src/services/api.js`. Vite proxies `/api` to `http://localhost:5050` in development. Keep this port in sync with the backend's `PORT` setting. If those endpoints aren't implemented yet, forms show an honest error; they **do not simulate a successful login or store fake accounts**.
 
 Session persistence, protected dashboard, profile, inventory, and API auth response handling remain future work after the team agrees on backend endpoints and JWT handling.
 
