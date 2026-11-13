@@ -9,6 +9,8 @@ import NotFoundPage from './pages/NotFoundPage.jsx'
 import InventoryPage from './pages/Inventory.jsx'
 import ScenariosPage from './pages/Scenarios.jsx'
 import ProfilePage from './pages/Profile.jsx'
+import RecommendationsPage from './pages/Recommendations.jsx'
+import LeaderboardPage from './pages/Leaderboard.jsx'
 
 function ScrollToLocation() {
   const { pathname, hash } = useLocation()
@@ -52,6 +54,26 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/leaderboard"
+          element={
+            <ProtectedRoute>
+              <LeaderboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+
+        <Route
+          path="/recommendations"
+          element={
+            <ProtectedRoute>
+              <RecommendationsPage />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/profile"
           element={

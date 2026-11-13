@@ -57,5 +57,33 @@ export async function saveHousehold(household) {
   return response.data
 }
 
+export async function getSimulations() {
+  const response = await api.get('/simulations')
+  return response.data
+}
+
+
+export async function runSimulation(scenario) {
+  const response = await api.post('/simulations', {
+    scenario
+  })
+
+  return response.data
+}
+
+
+export async function getRecommendations(resultId) {
+  const response = await api.get(`/simulations/${resultId}/recommendations`)
+  return response.data
+}
+
+export async function getLeaderboard(scenario = 'powerOutage') {
+  const response = await api.get('/leaderboard', {
+    params: { scenario }
+  })
+
+  return response.data
+}
+
 
 export default api
