@@ -173,8 +173,10 @@ reports whether the API can reach MongoDB. Accounts can be created with
 `POST /api/auth/register` (`name`, `email`, and `password`) and used to sign in
 with `POST /api/auth/login` (`email` and `password`). Successful registration
 and login issue an HTTP-only session cookie; `GET /api/auth/me` verifies it and
-`POST /api/auth/logout` clears it. The inventory page redirects to sign-in when
-there is no valid session. Authenticated users can list and add inventory with
+`POST /api/auth/logout` clears it. Login allows up to five requests per IP per
+15-minute window; further attempts receive HTTP 429 until the window resets.
+The inventory page redirects to sign-in when there is no valid session.
+Authenticated users can list and add inventory with
 `GET /api/inventory` and `POST /api/inventory`, update an item with
 `PUT /api/inventory/:id`, or delete one with `DELETE /api/inventory/:id`.
 Inventory items require a name, positive quantity, resource type, and supported

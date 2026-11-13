@@ -123,3 +123,28 @@ test('registration rejects invalid passwords and duplicate email addresses', asy
   });
   assert.equal(duplicate.status, 409);
 });
+
+test('login is limited to five attempts per fifteen-minute window', async () => {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const response = await fetch(`${baseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', connection: 'close' },
+      body: JSON.stringify({ email: 'invalid', password: 'invalid' })
+    });
+
+    assert.equal(response.status, 400);
+  }
+
+  const limitedResponse = await fetch(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', connection: 'close' },
+    body: JSON.stringify({ email: 'invalid', password: 'invalid' })
+  });
+  const body = await limitedResponse.json();
+
+  assert.equal(limitedResponse.status, 429);
+  assert.deepEqual(body, {
+    success: false,
+    message: 'Too many login attempts. Please try again in 15 minutes.'
+  });
+});
