@@ -46,4 +46,16 @@ export async function deleteInventoryItem(id) {
   return response.data
 }
 
+
+export async function getHousehold() {
+  const response = await api.get('/household')
+  return response.data
+}
+
+export async function saveHousehold(household) {
+  const response = await api.put('/household', household)
+  return response.data
+}
+
+
 export default api
