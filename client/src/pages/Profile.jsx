@@ -1,28 +1,96 @@
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import useAuth from '../context/useAuth.js'
+import { getHousehold, saveHousehold } from '../services/api.js'
 
 export default function ProfilePage() {
   const { user } = useAuth()
 
-  // Temporary household data for frontend development
-  const [household, setHousehold] = useState({
-    adults: 2,
-    children: 1,
-    infants: 1,
-    pets: 1
-  })
+  // Household data loaded from the backend
+  const [household, setHousehold] = useState(null)
+  const [loadingHousehold, setLoadingHousehold] = useState(true)
+  const [householdError, setHouseholdError] = useState('')
+  const [savingHousehold, setSavingHousehold] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
+
+  // Load the user's saved household when the page opens
+  useEffect(() => {
+    let active = true
+
+    async function loadHousehold() {
+      try {
+        const response = await getHousehold()
+
+        if (active) {
+          setHousehold(response.data.household ?? {
+            adults: 0,
+            children: 0,
+            infants: 0,
+            pets: 0
+          })
+        }
+      } catch {
+        if (active) {
+          setHouseholdError('Unable to load your household.')
+        }
+      } finally {
+        if (active) {
+          setLoadingHousehold(false)
+        }
+      }
+    }
+
+    loadHousehold()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   // Calculate total people (pets are excluded)
-  const totalPeople =
-    household.adults + household.children + household.infants
+  const totalPeople = household
+    ? household.adults + household.children + household.infants
+    : 0
 
   // Increase or decrease a household category
   function updateHousehold(category, change) {
+    setSaveMessage('')
+
     setHousehold((current) => ({
       ...current,
-      [category]: Math.max(0, current[category] + change)
+      [category]: Math.min(50, Math.max(0, current[category] + change))
     }))
+  }
+
+  // Save household information to MongoDB
+  async function handleSaveHousehold() {
+    if (totalPeople < 1) {
+      setSaveMessage('Add at least one person before saving.')
+      return
+    }
+
+    setSavingHousehold(true)
+    setSaveMessage('')
+
+    try {
+      await saveHousehold(household)
+      setSaveMessage('Household saved successfully!')
+    } catch {
+      setSaveMessage('Unable to save household. Please try again.')
+    } finally {
+      setSavingHousehold(false)
+    }
+  }
+
+  // Display loading or error screen
+  if (loadingHousehold || householdError) {
+    return (
+      <main className="min-h-screen bg-[#101713] px-6 py-10 text-[#eaf2ea]">
+        <p role="status" className="mx-auto max-w-6xl text-[#b5c6b7]">
+          {householdError || 'Loading household information...'}
+        </p>
+      </main>
+    )
   }
 
   return (
@@ -173,8 +241,9 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={() => updateHousehold(category.key, 1)}
+                    disabled={household[category.key] >= 50}
                     aria-label={`Increase ${category.label}`}
-                    className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#405a45] text-xl hover:bg-[#304235]"
+                    className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#405a45] text-xl hover:bg-[#304235] disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     +
                   </button>
@@ -223,8 +292,9 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => updateHousehold('pets', 1)}
+                disabled={household.pets >= 50}
                 aria-label="Increase pets"
-                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#405a45] text-xl hover:bg-[#304235]"
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-[#405a45] text-xl hover:bg-[#304235] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 +
               </button>
@@ -232,6 +302,22 @@ export default function ProfilePage() {
             </div>
           </div>
         </section>
+
+        {/* Save household changes */}
+        <div className="mt-6 flex flex-col items-end gap-3">
+          <p role="status" className="text-sm text-[#b5c6b7]">
+            {saveMessage}
+          </p>
+
+          <button
+            type="button"
+            onClick={handleSaveHousehold}
+            disabled={savingHousehold || totalPeople < 1}
+            className="cursor-pointer rounded-md bg-[#b6db8a] px-6 py-3 font-semibold text-[#101713] hover:bg-[#c9eca0] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {savingHousehold ? 'Saving...' : 'Save Household'}
+          </button>
+        </div>
 
       </div>
     </main>
