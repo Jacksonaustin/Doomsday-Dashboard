@@ -356,7 +356,7 @@ Sensitive values belong in:
 Examples:
 
 ```text
-PORT=5000
+PORT=5050
 
 MONGO_URI=xxxxx
 
