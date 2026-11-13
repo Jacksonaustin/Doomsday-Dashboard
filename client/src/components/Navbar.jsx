@@ -7,6 +7,7 @@ import Icon from './Icon.jsx'
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [logoutError, setLogoutError] = useState('')
+  const [accountOpen, setAccountOpen] = useState(false)
   const location = useLocation()
   const { user, logout } = useAuth()
 
@@ -20,8 +21,9 @@ export default function Navbar() {
   }
 
   function closeMenu() {
-    setMenuOpen(false)
-  }
+  setMenuOpen(false)
+  setAccountOpen(false)
+}
 
   async function handleLogout() {
     try {
@@ -64,26 +66,71 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <div className="desktop-actions">
-          {user ? (
-            <>
-              <span className="nav-user">{user.name}</span>
-              <button className="nav-logout" type="button" onClick={handleLogout}>
-                Log out
-              </button>
-            </>
-          ) : (
-            <>
-              <Link className="nav-login" to="/login">
-                Log in
-              </Link>
-              <Link className="button button-primary button-small" to="/register">
-                Get Started
-                <Icon name="arrow" size={16} />
-              </Link>
-            </>
-          )}
-        </div>
+
+      <div className="desktop-actions">
+        {user ? (
+          <div className="relative">
+
+            {/* Account dropdown trigger */}
+            <button
+              type="button"
+              onClick={() => setAccountOpen((current) => !current)}
+              aria-expanded={accountOpen}
+              aria-haspopup="true"
+              className="flex cursor-pointer items-center gap-3 rounded-lg border border-[#304235] bg-[#18231c] px-3 py-2 text-sm text-[#eaf2ea] transition-colors hover:bg-[#243329] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#b6db8a]"
+            >
+              {/* Account avatar */}
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#304235] text-xs font-bold text-[#b6db8a]">
+                {user.name?.charAt(0)?.toUpperCase()}
+              </span>
+
+              <span>{user.name}</span>
+
+              {/* Dropdown arrow */}
+              <span className={`text-[#b6db8a] transition-transform ${accountOpen ? 'rotate-180' : ''}`}>
+                ▾
+              </span>
+            </button>
+
+            {/* Account dropdown menu */}
+            {accountOpen && (
+              <div className="absolute right-0 top-full z-50 mt-3 w-44 rounded-lg border border-[#304235] bg-[#18231c] p-2 shadow-lg">
+
+                <Link
+                  to="/profile"
+                  onClick={closeMenu}
+                  className="block rounded-md px-3 py-2 text-sm text-[#eaf2ea] hover:bg-[#304235]"
+                >
+                  My Profile
+                </Link>
+
+                <div className="my-2 border-t border-[#304235]" />
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="block w-full cursor-pointer rounded-md px-3 py-2 text-left text-sm text-[#eaf2ea] hover:bg-[#304235]"
+                >
+                  Log Out
+                </button>
+
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <Link className="nav-login" to="/login">
+              Log in
+            </Link>
+
+            <Link className="button button-primary button-small" to="/register">
+              Get Started
+              <Icon name="arrow" size={16} />
+            </Link>
+          </>
+        )}
+      </div>
+
         {/* mobile side ---------------------------------------------------------------- */}
         <button
           className="mobile-toggle"
@@ -105,9 +152,15 @@ export default function Navbar() {
           ))}
 
           {user ? (
-            <button type="button" onClick={handleLogout}>
-              Log out
-            </button>
+            <>
+              <Link to="/profile" onClick={closeMenu}>
+                My Profile
+              </Link>
+
+              <button type="button" onClick={handleLogout}>
+                Log out
+              </button>
+            </>
           ) : (
             <>
               <Link to="/login" onClick={closeMenu}>
