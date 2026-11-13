@@ -10,5 +10,6 @@ router.get('/scenarios', simulationController.scenarios); // must come before /:
 router.post('/', simulationController.run);
 router.get('/', simulationController.list);
 router.get('/:id', simulationController.getOne);
+router.get('/:id/recommendations', simulationController.recommendations);
 
 module.exports = router;
