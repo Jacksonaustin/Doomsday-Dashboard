@@ -4,6 +4,8 @@ export const publicNavItems = [
   { label: 'Home', to: '/' },
   { label: 'Inventory', to: '/inventory' },
     { label: 'Scenarios', to: '/scenarios' },
+  { label: 'Recommendations', to: '/recommendations' },
+  { label: 'Leaderboard', to: '/leaderboard' }
 
 ]
 

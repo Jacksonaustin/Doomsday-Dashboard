@@ -7,6 +7,7 @@ const householdRoutes = require('./routes/householdRoutes');
 const simulationRoutes = require('./routes/simulationRoutes');
 const errorMiddleware = require('./middleware/errorMiddleware');
 const notFoundMiddleware = require('./middleware/notFoundMiddleware');
+const leaderboardRoutes = require('./routes/leaderboardRoutes')
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/household', householdRoutes);
 app.use('/api/simulations', simulationRoutes);
+app.use('/api/leaderboard', leaderboardRoutes)
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 
