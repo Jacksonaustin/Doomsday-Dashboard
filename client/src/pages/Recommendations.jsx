@@ -4,7 +4,11 @@ import { Link } from 'react-router-dom'
 import {
   getSimulations,
   getRecommendations,
-  getInventoryItems
+  getInventoryItems,
+  getChecklistItems,
+  addChecklistItem as saveChecklistItem,
+  updateChecklistItem as saveChecklistItemChanges,
+  deleteChecklistItem as removeSavedChecklistItem
 } from '../services/api.js'
 
 export default function RecommendationsPage() {
@@ -21,8 +25,13 @@ export default function RecommendationsPage() {
   const [recommendationsError, setRecommendationsError] = useState('')
   const [expandedResource, setExpandedResource] = useState(null)
 
-  // Local checklist until the backend is ready
+  // Persisted checklist
   const [checklistItems, setChecklistItems] = useState([])
+  const [checklistLoading, setChecklistLoading] = useState(true)
+  const [checklistError, setChecklistError] = useState('')
+  const [checklistActionError, setChecklistActionError] = useState('')
+  const [pendingRecommendationId, setPendingRecommendationId] = useState('')
+  const [pendingChecklistId, setPendingChecklistId] = useState('')
 
   const hasInventory = inventoryItems !== null && inventoryItems.length > 0
 
@@ -57,6 +66,33 @@ export default function RecommendationsPage() {
     }
 
     loadData()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  // Load saved checklist items so they are restored after a page refresh.
+  useEffect(() => {
+    let active = true
+
+    getChecklistItems()
+      .then((response) => {
+        if (active) {
+          setChecklistItems(response.data.items)
+          setChecklistError('')
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setChecklistError('Unable to load your checklist. Please try again.')
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setChecklistLoading(false)
+        }
+      })
 
     return () => {
       active = false
@@ -98,27 +134,33 @@ export default function RecommendationsPage() {
     }
   }, [selectedSimulationId, hasInventory])
 
-  // Add a recommendation to the checklist
-  function addToChecklist(recommendation, group) {
-    setChecklistItems((current) => {
-      // Prevent duplicate recommendations
-      if (current.some((item) => item.id === recommendation.id)) {
-        return current
-      }
+  // Save a recommendation to the user's database-backed checklist.
+  async function addToChecklist(recommendation, group) {
+    setPendingRecommendationId(recommendation.id)
+    setChecklistActionError('')
 
-      return [
-        ...current,
-        {
-          id: recommendation.id,
-          title: recommendation.title,
-          description: recommendation.explanation,
-          category: recommendation.category,
-          resource: group.resource,
-          simulationId: selectedSimulationId,
-          completed: false
-        }
-      ]
-    })
+    try {
+      const response = await saveChecklistItem({
+        recommendationId: recommendation.id,
+        title: recommendation.title,
+        description: recommendation.explanation,
+        category: recommendation.category || '',
+        resource: group.resource,
+        simulationId: selectedSimulationId
+      })
+      const savedItem = response.data.item
+      setChecklistItems((current) => (
+        current.some((item) => item.id === savedItem.id)
+          ? current
+          : [savedItem, ...current]
+      ))
+    } catch (requestError) {
+      setChecklistActionError(
+        requestError.response?.data?.message || 'Unable to save this checklist item.'
+      )
+    } finally {
+      setPendingRecommendationId('')
+    }
   }
 
   // Expand or collapse a resource category
@@ -128,21 +170,41 @@ export default function RecommendationsPage() {
     )
   }
 
-function removeChecklistItem(id) {
-  setChecklistItems((current) =>
-    current.filter((item) => item.id !== id)
-  )
-}
+  async function removeChecklistItem(id) {
+    setPendingChecklistId(id)
+    setChecklistActionError('')
 
+    try {
+      await removeSavedChecklistItem(id)
+      setChecklistItems((current) => current.filter((item) => item.id !== id))
+    } catch (requestError) {
+      setChecklistActionError(
+        requestError.response?.data?.message || 'Unable to remove this checklist item.'
+      )
+    } finally {
+      setPendingChecklistId('')
+    }
+  }
 
-  function toggleChecklistItem(id) {
-    setChecklistItems((current) =>
-     current.map((item) =>
-       item.id === id
-         ? { ...item, completed: !item.completed }
-         : item
-     )
-   )
+  async function toggleChecklistItem(item) {
+    setPendingChecklistId(item.id)
+    setChecklistActionError('')
+
+    try {
+      const response = await saveChecklistItemChanges(item.id, {
+        completed: !item.completed
+      })
+      const updatedItem = response.data.item
+      setChecklistItems((current) => current.map((currentItem) => (
+        currentItem.id === updatedItem.id ? updatedItem : currentItem
+      )))
+    } catch (requestError) {
+      setChecklistActionError(
+        requestError.response?.data?.message || 'Unable to update this checklist item.'
+      )
+    } finally {
+      setPendingChecklistId('')
+    }
   }
 
 
@@ -388,8 +450,9 @@ function removeChecklistItem(id) {
                                   ) : (
                                     group.recommendations.map((recommendation) => {
                                       const alreadyAdded = checklistItems.some(
-                                        (item) => item.id === recommendation.id
+                                        (item) => item.recommendationId === recommendation.id
                                       )
+                                      const isAdding = pendingRecommendationId === recommendation.id
 
                                       return (
                                         <article
@@ -407,10 +470,12 @@ function removeChecklistItem(id) {
                                           <button
                                             type="button"
                                             onClick={() => addToChecklist(recommendation, group)}
-                                            disabled={alreadyAdded}
+                                            disabled={alreadyAdded || isAdding}
                                             className="mt-4 rounded-lg bg-[#b6db8a] px-4 py-2 text-sm font-semibold text-[#101713] transition hover:bg-[#c8e9a1] disabled:cursor-not-allowed disabled:opacity-50"
                                           >
-                                            {alreadyAdded
+                                            {isAdding
+                                              ? 'Saving…'
+                                              : alreadyAdded
                                               ? 'Added to Checklist'
                                               : '+ Add to Checklist'}
                                           </button>
@@ -450,7 +515,21 @@ function removeChecklistItem(id) {
               </span>
             </div>
 
-            {checklistItems.length === 0 ? (
+            {checklistActionError && (
+              <p className="mt-4 text-sm text-red-400" role="alert">
+                {checklistActionError}
+              </p>
+            )}
+
+            {checklistLoading ? (
+              <p className="mt-4 text-sm text-[#b5c6b7]" role="status">
+                Loading your checklist…
+              </p>
+            ) : checklistError ? (
+              <p className="mt-4 text-sm text-red-400" role="alert">
+                {checklistError}
+              </p>
+            ) : checklistItems.length === 0 ? (
               <p className="mt-4 text-sm text-[#b5c6b7]">
                 No checklist items added yet.
               </p>
@@ -459,9 +538,11 @@ function removeChecklistItem(id) {
                 {checklistItems.map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-lg border border-[#304235] bg-[#101713] p-4"
+                    className={`rounded-lg border border-[#304235] bg-[#101713] p-4 ${
+                      item.completed ? 'opacity-70' : ''
+                    }`}
                   >
-                    <h3 className="font-medium">
+                    <h3 className={`font-medium ${item.completed ? 'line-through' : ''}`}>
                       {item.title}
                     </h3>
 
@@ -474,11 +555,24 @@ function removeChecklistItem(id) {
                     </span>
 
                     <button
-                    type="button"
-                    onClick={() => removeChecklistItem(item.id)}
-                    className="ml-3 rounded-lg border border-[#304235] px-3 py-1.5 text-xs text-red-300 transition hover:bg-red-950/30"
+                      type="button"
+                      onClick={() => toggleChecklistItem(item)}
+                      disabled={pendingChecklistId === item.id}
+                      className="ml-3 rounded-lg border border-[#304235] px-3 py-1.5 text-xs text-[#b6db8a] transition hover:bg-[#243329] disabled:opacity-50"
                     >
-                    Remove
+                      {pendingChecklistId === item.id
+                        ? 'Saving…'
+                        : item.completed
+                          ? 'Mark incomplete'
+                          : 'Mark complete'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeChecklistItem(item.id)}
+                      disabled={pendingChecklistId === item.id}
+                      className="ml-2 rounded-lg border border-[#304235] px-3 py-1.5 text-xs text-red-300 transition hover:bg-red-950/30 disabled:opacity-50"
+                    >
+                      Remove
                     </button>
 
                   </div>
