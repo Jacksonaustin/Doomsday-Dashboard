@@ -181,5 +181,8 @@ Authenticated users can list and add inventory with
 `PUT /api/inventory/:id`, or delete one with `DELETE /api/inventory/:id`.
 Inventory items require a name, positive quantity, resource type, and supported
 unit; items are scoped to their owner and use the same resource types as disaster
-simulations. Unknown routes return a JSON 404 response. Run the backend test
-command with `npm test`.
+simulations. Checklist items are persisted per user with `GET /api/checklist`
+and `POST /api/checklist`; update completion with `PATCH /api/checklist/:id`
+(`completed` boolean) or remove an item with `DELETE /api/checklist/:id`.
+Unknown routes return a JSON 404 response. Run the backend test command with
+`npm test`.

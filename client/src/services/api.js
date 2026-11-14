@@ -77,6 +77,26 @@ export async function getRecommendations(resultId) {
   return response.data
 }
 
+export async function getChecklistItems() {
+  const response = await api.get('/checklist')
+  return response.data
+}
+
+export async function addChecklistItem(item) {
+  const response = await api.post('/checklist', item)
+  return response.data
+}
+
+export async function updateChecklistItem(id, changes) {
+  const response = await api.patch(`/checklist/${id}`, changes)
+  return response.data
+}
+
+export async function deleteChecklistItem(id) {
+  const response = await api.delete(`/checklist/${id}`)
+  return response.data
+}
+
 export async function getLeaderboard(scenario = 'powerOutage') {
   const response = await api.get('/leaderboard', {
     params: { scenario }
