@@ -29,6 +29,18 @@ const REQUIREMENTS = {
   power: {
     label: 'battery pack', kind: 'essential', minimum: 1,
     unit: 'pieces', weight: 1, critical: false, counts: ['battery_pack']
+  },
+  medication: {
+    label: 'medication', kind: 'duration', unit: 'days',
+    weight: 2, critical: true, counts: ['medication']
+  },
+  shelter: {
+    label: 'shelter or warmth supplies', kind: 'essential', minimum: 1,
+    unit: 'pieces', weight: 1, critical: false, counts: ['shelter']
+  },
+  sanitation: {
+    label: 'sanitation supplies', kind: 'essential', minimum: 1,
+    unit: 'pieces', weight: 1, critical: false, counts: ['sanitation']
   }
 };
 
