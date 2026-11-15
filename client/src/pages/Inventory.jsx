@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import useAuth from '../context/useAuth.js'
 import {
   createInventoryItem,
@@ -286,10 +287,24 @@ export default function InventoryPage() {
   return (
     <main className="min-h-screen bg-[#101713] text-[#eaf2ea]">
       <div className="mx-auto max-w-6xl px-6 py-10">
-        <h1 className="text-3xl font-bold">Inventory</h1>
-        <p className="mt-2 text-[#b5c6b7]">
-          Keep track of your household emergency supplies.
-        </p>
+
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <h1 className="text-3xl font-bold">
+        Inventory
+      </h1>
+
+      <Link
+        to="/profile"
+        className="rounded-lg border border-[#304235] bg-[#18231c] px-4 py-2 text-sm font-medium text-[#b6db8a] transition-colors hover:bg-[#304235]"
+      >
+        Edit Household
+      </Link>
+    </div>
+
+    <p className="mt-2 text-[#b5c6b7]">
+      Keep track of your household emergency supplies.
+    </p>
+
 
         <div className="mt-8 flex flex-col gap-6 md:flex-row">
           <aside className="w-full rounded-xl border border-[#304235] bg-[#18231c] p-4 md:w-56">
