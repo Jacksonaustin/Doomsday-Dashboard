@@ -14,7 +14,7 @@ export default function ScenariosPage() {
       setSimulationResult(null)
 
       try {
-        const response = await runSimulation('powerOutage')
+        const response = await runSimulation('powerOutage', duration)
 
         setSimulationResult(response.data)
         console.log('Simulation result:', response.data)
@@ -79,7 +79,7 @@ export default function ScenariosPage() {
             id="simulation-duration"
             type="range"
             min="1"
-            max="14"
+            max="30"
             step="1"
             value={duration}
             onChange={(event) => setDuration(Number(event.target.value))}
@@ -90,7 +90,7 @@ export default function ScenariosPage() {
 
         <div className="mt-2 flex justify-between text-xs text-[#b5c6b7]">
           <span>1 day</span>
-          <span>14 days</span>
+          <span>30 days</span>
         </div>
 
         {/* Run Simulation button */}
@@ -143,9 +143,28 @@ export default function ScenariosPage() {
         </p>
 
         <p className="mt-2 text-xs text-[#b5c6b7]">
-          Based on your household supplies and resource requirements.
+          For a {simulationResult.days}-day outage, based on your household supplies.
         </p>
       </div>
+
+      {/* How long supplies last, whatever the outage length */}
+      {simulationResult.survival && (
+        <div className="rounded-lg border border-[#304235] bg-[#101713] p-4">
+          <h3 className="text-sm text-[#b5c6b7]">
+            Supplies Last
+          </h3>
+
+          <p className="mt-2 text-4xl font-bold text-[#b6db8a]">
+            {simulationResult.survival.days} {simulationResult.survival.days === 1 ? 'day' : 'days'}
+          </p>
+
+          <p className="mt-2 text-xs capitalize text-[#b5c6b7]">
+            Runs out first: {simulationResult.resourceCoverage.find(
+              (resource) => resource.resource === simulationResult.survival.limitedBy
+            )?.label}
+          </p>
+        </div>
+      )}
 
       {/* Resource coverage */}
       <div className="rounded-lg border border-[#304235] bg-[#101713] p-4">

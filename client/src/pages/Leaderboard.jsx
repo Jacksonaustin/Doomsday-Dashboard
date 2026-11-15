@@ -6,6 +6,7 @@ export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [days, setDays] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -16,8 +17,9 @@ export default function LeaderboardPage() {
 
         if (active) {
           setLeaderboard(response.data.leaderboard)
+          setDays(response.data.days)
         }
-      } catch (error) {
+      } catch {
         if (active) {
           setError('Unable to load leaderboard.')
         }
@@ -46,6 +48,12 @@ export default function LeaderboardPage() {
           See how prepared your community is for emergencies.
         </p>
 
+        {days && (
+          <p className="mt-1 text-sm text-[#b5c6b7]">
+            Ranked by each person's latest standard {days}-day power outage simulation.
+          </p>
+        )}
+
         {loading && <p className="mt-8">Loading leaderboard...</p>}
 
         {error && (
@@ -65,8 +73,16 @@ export default function LeaderboardPage() {
               #{user.rank} {user.name}
             </span>
 
-            <span className="font-semibold text-[#b6db8a]">
-              {user.preparednessScore}/100
+            <span className="flex items-baseline gap-4">
+              <span className="text-sm text-[#b5c6b7]">
+                {user.survivalDays == null
+                  ? 'Lasts —'
+                  : `Lasts ${user.survivalDays} ${user.survivalDays === 1 ? 'day' : 'days'}`}
+              </span>
+
+              <span className="font-semibold text-[#b6db8a]">
+                {user.preparednessScore}/100
+              </span>
             </span>
           </div>
         ))}

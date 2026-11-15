@@ -6,6 +6,8 @@ const { SCENARIOS } = require('../config/scenarios');
 const { calculateGaps } = require('./gapEngine');
 const httpError = require('../utils/httpError');
 
+const MAX_DAYS = 365;
+
 function listScenarios() {
   return Object.entries(SCENARIOS).map(([key, scenario]) => ({
     key,
@@ -18,7 +20,10 @@ function toPublicResult(result) {
   return {
     id: result.id || result._id.toString(),
     scenario: result.scenario,
+    // Results saved before custom lengths existed used the scenario's own length.
+    days: result.days ?? SCENARIOS[result.scenario]?.days ?? null,
     preparednessScore: result.preparednessScore,
+    survival: result.survival ?? null,
     shortages: result.shortages,
     resourceCoverage: result.resourceCoverage,
     household: result.household,
@@ -26,11 +31,22 @@ function toPublicResult(result) {
   };
 }
 
-async function runSimulation(userId, scenarioKey) {
+// Missing days means the scenario's own length.
+function parseDays(days) {
+  if (days === undefined || days === null) return undefined;
+  if (!Number.isInteger(days) || days < 1 || days > MAX_DAYS) {
+    throw httpError(400, `Days must be a whole number from 1 to ${MAX_DAYS}`);
+  }
+  return days;
+}
+
+async function runSimulation(userId, scenarioKey, requestedDays) {
   // hasOwn stops keys like "toString" from matching built-in object properties.
   if (typeof scenarioKey !== 'string' || !Object.hasOwn(SCENARIOS, scenarioKey)) {
     throw httpError(400, `Scenario must be one of: ${Object.keys(SCENARIOS).join(', ')}`);
   }
+
+  const days = parseDays(requestedDays);
 
   const [inventory, household] = await Promise.all([
     InventoryItem.find({ userId }).lean(),
@@ -43,7 +59,7 @@ async function runSimulation(userId, scenarioKey) {
 
   let gaps;
   try {
-    gaps = calculateGaps({ inventory, household, scenarioKey });
+    gaps = calculateGaps({ inventory, household, scenarioKey, days });
   } catch (error) {
     // The engine only throws for bad input, like a household with no people.
     throw httpError(400, error.message);

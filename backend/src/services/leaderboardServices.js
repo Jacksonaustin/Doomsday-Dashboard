@@ -11,7 +11,13 @@ async function getLeaderboard(scenario = 'powerOutage') {
 
   const results = await SimulationResult.aggregate([
     // Only compare the same disaster scenario
-    { $match: { scenario } },
+    // Only standard-length runs are comparable. Older results have no days field.
+    {
+      $match: {
+        scenario,
+        days: { $in: [SCENARIOS[scenario].days, null] }
+      }
+    },
 
     // Newest simulations first
     { $sort: { createdAt: -1, _id: -1 } },
@@ -42,6 +48,8 @@ async function getLeaderboard(scenario = 'powerOutage') {
         _id: 0,
         name: '$user.name',
         preparednessScore: '$latest.preparednessScore',
+        // Older results have no survival estimate, so this can be null.
+        survivalDays: { $ifNull: ['$latest.survival.days', null] },
         scenario: '$latest.scenario',
         createdAt: '$latest.createdAt'
       }

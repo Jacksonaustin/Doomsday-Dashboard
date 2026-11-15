@@ -119,3 +119,29 @@ test('users only see their own results', async () => {
   const history = await (await request('/api/simulations')).json();
   assert.equal(history.data.results.length, 1);
 });
+
+test('a custom length is used and saved', async () => {
+  const response = await request('/api/simulations', { method: 'POST', body: { scenario: 'tornado', days: 10 } });
+  const body = await response.json();
+
+  assert.equal(response.status, 201);
+  assert.equal(body.data.days, 10);
+  assert.equal(savedResults[0].days, 10);
+  assert.equal(typeof body.data.preparednessScore, 'number');
+  assert.equal(typeof body.data.survival.days, 'number');
+});
+
+test('bad lengths are rejected with 400', async () => {
+  for (const days of [0, -1, 2.5, 366, '7', 'indefinite', true]) {
+    const response = await request('/api/simulations', { method: 'POST', body: { scenario: 'tornado', days } });
+    assert.equal(response.status, 400, `days ${JSON.stringify(days)}`);
+  }
+});
+
+test('results saved before custom lengths show the scenario length', async () => {
+  savedResults.push({ _id: '5f0000000000000000000099', userId: USER_ID, scenario: 'flood', preparednessScore: 50, shortages: [], resourceCoverage: [] });
+  const body = await (await request('/api/simulations/5f0000000000000000000099')).json();
+
+  assert.equal(body.data.days, 3);
+  assert.equal(body.data.survival, null);
+});

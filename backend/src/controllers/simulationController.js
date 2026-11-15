@@ -11,7 +11,11 @@ function scenarios(req, res) {
 
 async function run(req, res, next) {
   try {
-    const result = await simulationServices.runSimulation(req.auth.userId, req.body?.scenario);
+    const result = await simulationServices.runSimulation(
+      req.auth.userId,
+      req.body?.scenario,
+      req.body?.days
+    );
     res.status(201).json({ success: true, data: result, message: 'Simulation complete' });
   } catch (error) {
     next(error);
