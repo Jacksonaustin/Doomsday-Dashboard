@@ -1,6 +1,7 @@
 const { RESOURCE_TYPES } = require('../config/resourceTypes');
 const { REQUIREMENTS } = require('../config/requirements');
 const { SCENARIOS } = require('../config/scenarios');
+
 const ALL_MEMBERS = ['adults', 'children', 'infants'];
 
 function round(value) {
@@ -61,9 +62,9 @@ function dailyNeed(requirement, household) {
     (requirement.perPetPerDay || 0) * (household.pets || 0);
 }
 
-function needFor(requirement, household, scenario) {
-  if (requirement.kind === 'consumable') return dailyNeed(requirement, household) * scenario.days;
-  if (requirement.kind === 'duration') return scenario.days;
+function needFor(requirement, household, days) {
+  if (requirement.kind === 'consumable') return dailyNeed(requirement, household) * days;
+  if (requirement.kind === 'duration') return days;
   return requirement.minimum;
 }
 
@@ -82,16 +83,42 @@ function needsFor(scenario, household, medDays) {
   const needs = [...scenario.needs, ...conditional, ...(medDays === null ? [] : ['medication'])];
 
   // A household of only infants needs no meals; skip it instead of dividing by 0.
-  return needs.filter((key) => needFor(REQUIREMENTS[key], household, scenario) > 0);
+  return needs.filter((key) => {
+    const requirement = REQUIREMENTS[key];
+    return requirement.kind !== 'consumable' || dailyNeed(requirement, household) > 0;
+  });
 }
 
-function describe(shortage, people, pets, scenario) {
+// How long the household lasts before a critical supply runs out. All drinkable
+// water counts toward drinking here, since sanitation water would be drunk first.
+function survivalFor(needs, household, totals, haveFor) {
+  let shortest = null;
+
+  for (const key of needs) {
+    const requirement = REQUIREMENTS[key];
+    if (!requirement.critical || requirement.kind === 'essential') continue;
+
+    const have = key === 'drinking_water'
+      ? (totals.water || 0) + (totals.drink || 0)
+      : haveFor(key);
+    const days = requirement.kind === 'consumable' ? have / dailyNeed(requirement, household) : have;
+
+    if (!shortest || days < shortest.days) {
+      shortest = { days, limitedBy: key };
+    }
+  }
+
+  return { days: round(shortest.days), limitedBy: shortest.limitedBy };
+}
+
+function describe(shortage, people, pets, scenario, days) {
   const who = pets > 0 ? `${people} and ${pets} ${pets === 1 ? 'pet' : 'pets'}` : `${people}`;
   return `Household of ${who} has ${shortage.have} of ${shortage.need} ${shortage.unit} ` +
-    `of ${shortage.label} needed for a ${scenario.days}-day ${scenario.label.toLowerCase()}.`;
+    `of ${shortage.label} needed for a ${days}-day ${scenario.label.toLowerCase()}.`;
 }
 
-function calculateGaps({ inventory = [], household, scenarioKey, now = new Date() }) {
+// days: how long the disaster lasts. Leave it out to use the scenario's own length.
+function calculateGaps({ inventory = [], household, scenarioKey, days, now = new Date() }) {
   // hasOwn stops keys like "toString" from matching built-in object properties.
   const scenario = Object.hasOwn(SCENARIOS, scenarioKey) ? SCENARIOS[scenarioKey] : null;
   if (!scenario) {
@@ -107,30 +134,24 @@ function calculateGaps({ inventory = [], household, scenarioKey, now = new Date(
     throw new Error('Household must include at least one person');
   }
 
+  const length = days ?? scenario.days;
   const pets = household.pets || 0;
   const totals = totalsByResourceType(inventory, now);
-  const drinkingNeed = needFor(REQUIREMENTS.drinking_water, household, scenario);
+  const drinkingNeed = needFor(REQUIREMENTS.drinking_water, household, length);
   const water = splitWater(totals, drinkingNeed);
   const medDays = medicationDays(inventory, now);
   const needs = needsFor(scenario, household, medDays);
 
+  function haveFor(key) {
+    if (key === 'medication') return medDays;
+    if (key in water) return water[key];
+    return REQUIREMENTS[key].counts.reduce((sum, type) => sum + (totals[type] || 0), 0);
+  }
+
   const resourceCoverage = needs.map((key) => {
     const requirement = REQUIREMENTS[key];
-    let have;
-    if (key === 'medication') {
-      have = medDays;
-
-    } else if (key in water) {
-
-      have = water[key];
-
-    } else {
-
-      have = requirement.counts.reduce((sum, type) => sum + (totals[type] || 0), 0);
-    }
-
-    const need = needFor(requirement, household, scenario);
-    const daysCovered = daysCoveredFor(requirement, have, household);
+    const have = haveFor(key);
+    const need = needFor(requirement, household, length);
 
     // Coverage uses the rounded numbers, so "6 of 6" is never reported as a shortage.
     const roundedHave = round(have);
@@ -143,7 +164,7 @@ function calculateGaps({ inventory = [], household, scenarioKey, now = new Date(
       need: roundedNeed,
       unit: requirement.unit,
       coverage: Math.min(roundedHave / roundedNeed, 1),
-      daysCovered: daysCovered
+      daysCovered: daysCoveredFor(requirement, have, household)
     };
   });
 
@@ -160,12 +181,14 @@ function calculateGaps({ inventory = [], household, scenarioKey, now = new Date(
         shortfall: round(r.need - r.have),
         severity: severityFor(REQUIREMENTS[r.resource], r.coverage)
       };
-       return { ...shortage, description: describe(shortage, people, pets, scenario)};
+      return { ...shortage, description: describe(shortage, people, pets, scenario, length) };
     });
 
   return {
     scenario: scenarioKey,
+    days: length,
     preparednessScore: Math.round((weightedCoverage / totalWeight) * 100),
+    survival: survivalFor(needs, household, totals, haveFor),
     shortages,
     resourceCoverage
   };

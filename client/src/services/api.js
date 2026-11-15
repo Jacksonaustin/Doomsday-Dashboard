@@ -63,9 +63,11 @@ export async function getSimulations() {
 }
 
 
-export async function runSimulation(scenario) {
+// days is optional: leave it out to use the scenario's own length
+export async function runSimulation(scenario, days) {
   const response = await api.post('/simulations', {
-    scenario
+    scenario,
+    days
   })
 
   return response.data

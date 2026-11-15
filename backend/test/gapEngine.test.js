@@ -142,3 +142,33 @@ test('a household of only infants has no meal need', () => {
   assert.equal(find(result, 'infant_food').coverage, 1);
 });
 
+test('a custom length replaces the scenario default', () => {
+  const result = calculateGaps({ inventory: [], household: family, scenarioKey: 'tornado', days: 10, now });
+
+  assert.equal(result.days, 10);
+  assert.equal(find(result, 'drinking_water').need, 20); // 0.5 gal x 4 people x 10 days
+  assert.match(result.shortages[0].description, /needed for a 10-day tornado\.$/);
+});
+
+test('survival uses all drinkable water and names what runs out first', () => {
+  const inventory = [
+    { resourceType: 'water', quantity: 40, unit: 'gallons' }, // 20 days of drinking for 4
+    { resourceType: 'meal', quantity: 60, unit: 'meals' } // 5 days for 4
+  ];
+  const result = calculateGaps({ inventory, household: family, scenarioKey: 'tornado', now });
+
+  assert.deepEqual(result.survival, { days: 5, limitedBy: 'food' });
+  assert.equal(result.preparednessScore < 100, true); // the score is still for the 3-day run
+  assert.equal(find(result, 'drinking_water').daysCovered, 3); // drinking only gets what 3 days needs
+});
+
+test('medication can be what runs out first', () => {
+  const inventory = [
+    { resourceType: 'water', quantity: 40, unit: 'gallons' },
+    { resourceType: 'meal', quantity: 240, unit: 'meals' },
+    { resourceType: 'medication', quantity: 4, unit: 'days' }
+  ];
+  const result = calculateGaps({ inventory, household: family, scenarioKey: 'powerOutage', now });
+
+  assert.deepEqual(result.survival, { days: 4, limitedBy: 'medication' });
+});
