@@ -52,7 +52,7 @@ before(async () => {
 });
 
 beforeEach(() => {
-  households = new Map([[USER_ID, { adults: 2, children: 2, infants: 0 }]]);
+  households = new Map([[USER_ID, { adults: 2, children: 2, infants: 0, pets: 1 }]]);
   inventory = [{ userId: USER_ID, resourceType: 'water', quantity: 6, unit: 'gallons' }];
   savedResults = [];
 });
@@ -82,6 +82,8 @@ test('running a simulation saves and returns the gaps', async () => {
   assert.ok(body.data.shortages.some((s) => s.resource === 'food'));
   assert.equal(savedResults.length, 1);
   assert.equal(savedResults[0].userId, USER_ID);
+  assert.ok(body.data.resourceCoverage.some((r) => r.resource === 'pet_food'));
+  assert.deepEqual(savedResults[0].household, { adults: 2, children: 2, infants: 0, pets: 1 });
 });
 
 test('bad scenarios are rejected with 400, including built-in object keys', async () => {

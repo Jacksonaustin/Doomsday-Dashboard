@@ -24,7 +24,11 @@ const CATEGORY_RESOURCES = {
     { value: 'water', label: 'Water', units: ['gallons', 'liters', 'fluid_ounces'] },
     { value: 'drink', label: 'Shelf-stable drink', units: ['gallons', 'liters', 'fluid_ounces'] },
   ],
-  food: [{ value: 'meal', label: 'Meals', units: ['meals'] }],
+  food: [
+    { value: 'meal', label: 'Meals', units: ['meals'] },
+    { value: 'infant_food', label: 'Infant formula / baby food', units: ['days'] },
+    { value: 'pet_food', label: 'Pet food', units: ['days'] },
+  ],
   medical: [
     { value: 'first_aid_kit', label: 'First aid kit', units: ['pieces'] },
     { value: 'medication', label: 'Medication', units: ['days'] },

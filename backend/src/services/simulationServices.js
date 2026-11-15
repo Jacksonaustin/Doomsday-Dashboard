@@ -55,7 +55,8 @@ async function runSimulation(userId, scenarioKey) {
     household: {
       adults: household.adults || 0,
       children: household.children || 0,
-      infants: household.infants || 0
+      infants: household.infants || 0,
+      pets: household.pets || 0
     }
   });
 

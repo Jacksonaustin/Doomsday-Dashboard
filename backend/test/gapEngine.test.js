@@ -109,3 +109,36 @@ test('expired medication is flagged, not skipped', () => {
   assert.equal(find(result, 'medication').have, 0);
   assert.ok(result.shortages.some((s) => s.resource === 'medication'));
 });
+test('pets add drinking water and a pet food need', () => {
+  const household = { ...family, pets: 2 };
+  const result = calculateGaps({ inventory: [], household, scenarioKey: 'tornado', now });
+
+  assert.equal(find(result, 'drinking_water').need, 7.5); // (0.5 x 4 + 0.25 x 2) x 3 days
+  assert.equal(find(result, 'pet_food').need, 3);
+  assert.match(result.shortages[0].description, /^Household of 4 and 2 pets has/);
+});
+
+test('no pets means no pet food need', () => {
+  const result = calculateGaps({ inventory: [], household: family, scenarioKey: 'tornado', now });
+
+  assert.equal(find(result, 'pet_food'), undefined);
+  assert.equal(find(result, 'infant_food'), undefined);
+});
+
+test('infants need infant food and water but not meals', () => {
+  const household = { adults: 2, children: 0, infants: 1 };
+  const result = calculateGaps({ inventory: [], household, scenarioKey: 'tornado', now });
+
+  assert.equal(find(result, 'food').need, 18); // 3 meals x 2 adults x 3 days
+  assert.equal(find(result, 'drinking_water').need, 4.5); // 0.5 x 3 people x 3 days
+  assert.equal(find(result, 'infant_food').need, 3);
+});
+
+test('a household of only infants has no meal need', () => {
+  const inventory = [{ resourceType: 'infant_food', quantity: 3, unit: 'days' }];
+  const result = calculateGaps({ inventory, household: { adults: 0, infants: 1 }, scenarioKey: 'tornado', now });
+
+  assert.equal(find(result, 'food'), undefined);
+  assert.equal(find(result, 'infant_food').coverage, 1);
+});
+

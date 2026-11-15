@@ -11,7 +11,8 @@ const simulationResultSchema = new mongoose.Schema(
     household: {
       adults: Number,
       children: Number,
-      infants: Number
+      infants: Number,
+      pets: Number
     }
   },
   { timestamps: true }
