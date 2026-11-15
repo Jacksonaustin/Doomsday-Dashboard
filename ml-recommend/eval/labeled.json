@@ -43,5 +43,41 @@
     "resource": "power",
     "description": "Household of 4 has 0 of 1 pieces of battery pack needed for a 14-day long-term power outage.",
     "good": ["power-battery-pack", "outage-power-charge-early"]
+  },
+  {
+    "resource": "medication",
+    "description": "Household of 4 has 3 of 7 days of medication needed for a 7-day winter storm.",
+    "good": ["medical-prescriptions"]
+  },
+  {
+    "resource": "shelter",
+    "description": "Household of 4 has 0 of 1 pieces of shelter or warmth supplies needed for a 7-day winter storm.",
+    "good": ["shelter-warmth"]
+  },
+  {
+    "resource": "shelter",
+    "description": "Household of 3 has 0 of 1 pieces of shelter or warmth supplies needed for a 3-day tornado.",
+    "good": ["shelter-safe-room", "shelter-go-bag"]
+  },
+  {
+    "resource": "sanitation",
+    "description": "Household of 2 has 0 of 1 pieces of sanitation supplies needed for a 3-day flood.",
+    "good": ["sanitation-hygiene-kit", "sanitation-waste", "sanitation-cleaning"]
+  },
+  {
+    "resource": "infant_food",
+    "description": "Household of 3 has 0 of 3 days of infant formula or baby food needed for a 3-day flood.",
+    "good": ["infant-formula"]
+  },
+  {
+    "resource": "infant_food",
+    "description": "Household of 4 has 0 of 14 days of infant formula or baby food needed for a 14-day long-term power outage.",
+    "good": ["infant-formula", "infant-outage-feeding"]
+  },
+  {
+    "resource": "pet_food",
+    "description": "Household of 2 and 1 pet has 0 of 14 days of pet food needed for a 14-day long-term power outage.",
+    "good": ["pet-food-supply"]
   }
+
 ]

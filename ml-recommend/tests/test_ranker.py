@@ -23,7 +23,7 @@ def tfidf():
 
 def test_catalog_covers_every_required_category():
     categories = {item["category"] for item in load_catalog()}
-    required = {"water", "food", "medical", "communication", "lighting", "sanitation", "shelter"}
+    required = {"water", "food", "medical", "communication", "lighting", "sanitation", "shelter", "infant", "pets"}
     assert required <= categories
 
 
