@@ -250,5 +250,47 @@
     "title": "Heat your home safely in a winter outage",
     "explanation": "Never use a gas oven, stove or grill to heat your home. Gather everyone in one room, close off others and use extra layers.",
     "text": "no heat during a winter power outage, staying warm without electricity, unsafe heating, carbon monoxide from heaters"
+  },
+  {
+    "id": "infant-formula",
+    "category": "infant",
+    "title": "Keep a supply of formula or baby food",
+    "explanation": "Store enough formula and baby food for every day of the emergency, plus bottled water to mix powdered formula and clean bottles.",
+    "text": "not enough days of infant formula or baby food, store formula and baby food, baby formula running low, feeding an infant"
+  },
+  {
+    "id": "infant-supplies",
+    "category": "infant",
+    "title": "Pack diapers, wipes and baby care items",
+    "explanation": "Keep diapers, wipes, diaper rash cream and any infant medicine for the whole emergency, since stores may be closed.",
+    "text": "infant supplies, diapers and wipes, baby care items, caring for an infant during an emergency"
+  },
+  {
+    "id": "infant-outage-feeding",
+    "category": "infant",
+    "title": "Plan to feed your baby without power",
+    "explanation": "Ready-to-feed formula needs no mixing, which helps if clean water is limited. Follow the label for how long opened formula is safe without refrigeration.",
+    "text": "long-term power outage with a baby, no refrigerator or electricity for days, opened formula without refrigeration"
+  },
+  {
+    "id": "pet-food-supply",
+    "category": "pets",
+    "title": "Store food and water for your pets",
+    "explanation": "Keep several days of pet food in an airtight, waterproof container, and store extra water for each animal.",
+    "text": "not enough pet food, pet food shortage, dog or cat food running low, feeding pets, water for pets"
+  },
+  {
+    "id": "pet-kit",
+    "category": "pets",
+    "title": "Make an emergency kit for each pet",
+    "explanation": "Include medicine, a leash or carrier, copies of vet records and a current photo of your pet in case you get separated.",
+    "text": "pet emergency kit, pet carrier and leash, pet medication, vet records, pets during a disaster"
+  },
+  {
+    "id": "pet-evacuation",
+    "category": "pets",
+    "title": "Plan where your pets can stay if you evacuate",
+    "explanation": "Not every shelter accepts pets. Find pet-friendly shelters, hotels or friends outside your area ahead of time.",
+    "text": "evacuating with pets, pet friendly shelter, where pets can stay, flood or tornado with pets"
   }
 ]

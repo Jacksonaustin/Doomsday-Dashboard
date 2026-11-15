@@ -37,6 +37,8 @@ RESOURCE_CATEGORIES = {
     "power": ["power"],
     "shelter": ["shelter"],
     "sanitation": ["sanitation"],
+    "infant_food": ["infant"],
+    "pet_food": ["pets"]
 }
 
 GENERIC_ADVICE = {

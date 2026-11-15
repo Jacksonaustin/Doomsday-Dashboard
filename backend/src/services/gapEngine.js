@@ -1,6 +1,7 @@
 const { RESOURCE_TYPES } = require('../config/resourceTypes');
 const { REQUIREMENTS } = require('../config/requirements');
 const { SCENARIOS } = require('../config/scenarios');
+const ALL_MEMBERS = ['adults', 'children', 'infants'];
 
 function round(value) {
   return Math.round(value * 10) / 10;
@@ -29,11 +30,20 @@ function splitWater(totals, drinkingNeed) {
   const water = totals.water || 0;
   const drinks = totals.drink || 0;
   const waterForDrinking = Math.min(water, Math.max(0, drinkingNeed - drinks));
-
   return {
     drinking_water: drinks + waterForDrinking,
     sanitation_water: water - waterForDrinking
   };
+}
+
+// Calculates how many days of medication coverage the household has.
+// Only if the household has medication in their inventory.
+function medicationDays(inventory, now) {
+  const meds = inventory.filter((item) => item.resourceType === 'medication');
+  if (meds.length === 0) return null;
+
+  return Math.min(...meds.map((item) =>
+    item.expiresAt && new Date(item.expiresAt) < now ? 0 : item.quantity));
 }
 
 function severityFor(requirement, coverage) {
@@ -41,8 +51,43 @@ function severityFor(requirement, coverage) {
   return 'medium';
 }
 
-function describe(shortage, people, scenario) {
-  return `Household of ${people} has ${shortage.have} of ${shortage.need} ${shortage.unit} ` +
+function membersFor(requirement, household) {
+  return (requirement.members || ALL_MEMBERS)
+    .reduce((sum, field) => sum + (household[field] || 0), 0);
+}
+
+function dailyNeed(requirement, household) {
+  return requirement.perPersonPerDay * membersFor(requirement, household) +
+    (requirement.perPetPerDay || 0) * (household.pets || 0);
+}
+
+function needFor(requirement, household, scenario) {
+  if (requirement.kind === 'consumable') return dailyNeed(requirement, household) * scenario.days;
+  if (requirement.kind === 'duration') return scenario.days;
+  return requirement.minimum;
+}
+
+function daysCoveredFor(requirement, have, household) {
+  if (requirement.kind === 'consumable') return round(have / dailyNeed(requirement, household));
+  if (requirement.kind === 'duration') return round(have);
+  return null;
+}
+
+// The scenario's needs, plus the ones that depend on who is in the household.
+function needsFor(scenario, household, medDays) {
+  const conditional = Object.keys(REQUIREMENTS).filter((key) => {
+    const field = REQUIREMENTS[key].when;
+    return field && (household[field] || 0) > 0;
+  });
+  const needs = [...scenario.needs, ...conditional, ...(medDays === null ? [] : ['medication'])];
+
+  // A household of only infants needs no meals; skip it instead of dividing by 0.
+  return needs.filter((key) => needFor(REQUIREMENTS[key], household, scenario) > 0);
+}
+
+function describe(shortage, people, pets, scenario) {
+  const who = pets > 0 ? `${people} and ${pets} ${pets === 1 ? 'pet' : 'pets'}` : `${people}`;
+  return `Household of ${who} has ${shortage.have} of ${shortage.need} ${shortage.unit} ` +
     `of ${shortage.label} needed for a ${scenario.days}-day ${scenario.label.toLowerCase()}.`;
 }
 
@@ -62,18 +107,30 @@ function calculateGaps({ inventory = [], household, scenarioKey, now = new Date(
     throw new Error('Household must include at least one person');
   }
 
+  const pets = household.pets || 0;
   const totals = totalsByResourceType(inventory, now);
-  const drinkingNeed = REQUIREMENTS.drinking_water.perPersonPerDay * people * scenario.days;
+  const drinkingNeed = needFor(REQUIREMENTS.drinking_water, household, scenario);
   const water = splitWater(totals, drinkingNeed);
+  const medDays = medicationDays(inventory, now);
+  const needs = needsFor(scenario, household, medDays);
 
-  const resourceCoverage = scenario.needs.map((key) => {
+  const resourceCoverage = needs.map((key) => {
     const requirement = REQUIREMENTS[key];
-    const have = key in water
-      ? water[key]
-      : requirement.counts.reduce((sum, type) => sum + (totals[type] || 0), 0);
-    const need = requirement.kind === 'consumable'
-      ? requirement.perPersonPerDay * people * scenario.days
-      : requirement.minimum;
+    let have;
+    if (key === 'medication') {
+      have = medDays;
+
+    } else if (key in water) {
+
+      have = water[key];
+
+    } else {
+
+      have = requirement.counts.reduce((sum, type) => sum + (totals[type] || 0), 0);
+    }
+
+    const need = needFor(requirement, household, scenario);
+    const daysCovered = daysCoveredFor(requirement, have, household);
 
     // Coverage uses the rounded numbers, so "6 of 6" is never reported as a shortage.
     const roundedHave = round(have);
@@ -86,9 +143,7 @@ function calculateGaps({ inventory = [], household, scenarioKey, now = new Date(
       need: roundedNeed,
       unit: requirement.unit,
       coverage: Math.min(roundedHave / roundedNeed, 1),
-      daysCovered: requirement.kind === 'consumable'
-        ? round(have / (requirement.perPersonPerDay * people))
-        : null
+      daysCovered: daysCovered
     };
   });
 
@@ -105,7 +160,7 @@ function calculateGaps({ inventory = [], household, scenarioKey, now = new Date(
         shortfall: round(r.need - r.have),
         severity: severityFor(REQUIREMENTS[r.resource], r.coverage)
       };
-      return { ...shortage, description: describe(shortage, people, scenario) };
+       return { ...shortage, description: describe(shortage, people, pets, scenario)};
     });
 
   return {

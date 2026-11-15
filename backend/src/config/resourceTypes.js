@@ -14,7 +14,10 @@ const RESOURCE_TYPES = {
   radio: { category: 'tools', baseUnit: 'pieces', units: COUNTED },
   shelter: { category: 'shelter', baseUnit: 'pieces', units: COUNTED },
   sanitation: { category: 'hygiene', baseUnit: 'pieces', units: COUNTED },
-  other: { category: 'other', baseUnit: 'pieces', units: COUNTED }
+  other: { category: 'other', baseUnit: 'pieces', units: COUNTED },
+  infant_food: { category: 'food', baseUnit: 'days', units: { days: 1 } },
+  pet_food: { category: 'food', baseUnit: 'days', units: { days: 1 } },
+
 };
 
 module.exports = { RESOURCE_TYPES };

@@ -13,7 +13,7 @@ test('an empty inventory scores 0 with every need short', () => {
   const result = calculateGaps({ inventory: [], household: family, scenarioKey: 'tornado', now });
 
   assert.equal(result.preparednessScore, 0);
-  assert.equal(result.shortages.length, 6);
+  assert.equal(result.shortages.length, 8);
   assert.equal(find(result, 'drinking_water').need, 6); // 0.5 gal x 4 people x 3 days
 });
 
@@ -23,7 +23,9 @@ test('a fully stocked household scores 100 with no shortages', () => {
     { resourceType: 'meal', quantity: 36, unit: 'meals' },
     { resourceType: 'first_aid_kit', quantity: 1, unit: 'pieces' },
     { resourceType: 'flashlight', quantity: 2, unit: 'pieces' },
-    { resourceType: 'radio', quantity: 1, unit: 'pieces' }
+    { resourceType: 'radio', quantity: 1, unit: 'pieces' },
+    { resourceType: 'shelter', quantity: 1, unit: 'pieces' },
+    { resourceType: 'sanitation', quantity: 1, unit: 'pieces' }
   ];
   const result = calculateGaps({ inventory, household: family, scenarioKey: 'tornado', now });
 
@@ -79,3 +81,64 @@ test('an amount that rounds up to the need is not reported as a shortage', () =>
   assert.equal(find(result, 'sanitation_water').have, 6);
   assert.equal(result.shortages.some((s) => s.resource === 'sanitation_water'), false);
 });
+
+test('medication is not a need when none is tracked', () => {
+  const result = calculateGaps({ inventory: [], household: family, scenarioKey: 'winterStorm', now });
+
+  assert.equal(find(result, 'medication'), undefined);
+});
+
+test('medication coverage is the shortest supply', () => {
+  const inventory = [
+    { resourceType: 'medication', quantity: 14, unit: 'days' },
+    { resourceType: 'medication', quantity: 3, unit: 'days' }
+  ];
+  const result = calculateGaps({ inventory, household: family, scenarioKey: 'winterStorm', now });
+  const medication = result.shortages.find((s) => s.resource === 'medication');
+
+  assert.equal(medication.have, 3);
+  assert.equal(medication.need, 7);
+  assert.equal(medication.daysCovered, 3);
+  assert.equal(medication.severity, 'critical');
+});
+
+test('expired medication is flagged, not skipped', () => {
+  const inventory = [{ resourceType: 'medication', quantity: 30, unit: 'days', expiresAt: '2026-01-01' }];
+  const result = calculateGaps({ inventory, household: family, scenarioKey: 'tornado', now });
+
+  assert.equal(find(result, 'medication').have, 0);
+  assert.ok(result.shortages.some((s) => s.resource === 'medication'));
+});
+test('pets add drinking water and a pet food need', () => {
+  const household = { ...family, pets: 2 };
+  const result = calculateGaps({ inventory: [], household, scenarioKey: 'tornado', now });
+
+  assert.equal(find(result, 'drinking_water').need, 7.5); // (0.5 x 4 + 0.25 x 2) x 3 days
+  assert.equal(find(result, 'pet_food').need, 3);
+  assert.match(result.shortages[0].description, /^Household of 4 and 2 pets has/);
+});
+
+test('no pets means no pet food need', () => {
+  const result = calculateGaps({ inventory: [], household: family, scenarioKey: 'tornado', now });
+
+  assert.equal(find(result, 'pet_food'), undefined);
+  assert.equal(find(result, 'infant_food'), undefined);
+});
+
+test('infants need infant food and water but not meals', () => {
+  const household = { adults: 2, children: 0, infants: 1 };
+  const result = calculateGaps({ inventory: [], household, scenarioKey: 'tornado', now });
+
+  assert.equal(find(result, 'food').need, 18); // 3 meals x 2 adults x 3 days
+  assert.equal(find(result, 'drinking_water').need, 4.5); // 0.5 x 3 people x 3 days
+  assert.equal(find(result, 'infant_food').need, 3);
+});
+
+test('a household of only infants has no meal need', () => {
+  const inventory = [{ resourceType: 'infant_food', quantity: 3, unit: 'days' }];
+  const result = calculateGaps({ inventory, household: { adults: 0, infants: 1 }, scenarioKey: 'tornado', now });
+
+  assert.equal(find(result, 'food'), undefined);
+  assert.equal(find(result, 'infant_food').coverage, 1);
+});
+
