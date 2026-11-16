@@ -72,6 +72,10 @@ export async function runSimulation(scenario, days) {
 
   return response.data
 }
+export async function getSimulationScenarios() {
+  const response = await api.get('/simulations/scenarios')
+  return response.data
+}
 
 
 export async function getRecommendations(resultId) {
@@ -98,10 +102,14 @@ export async function deleteChecklistItem(id) {
   const response = await api.delete(`/checklist/${id}`)
   return response.data
 }
+export async function getLeaderboardOptions() {
+  const response = await api.get('/leaderboard/options')
+  return response.data
+}
 
-export async function getLeaderboard(scenario = 'powerOutage') {
+export async function getLeaderboard(scenario = 'powerOutage', days) {
   const response = await api.get('/leaderboard', {
-    params: { scenario }
+    params: { scenario, ...(days != null ? { days } : {}) }
   })
 
   return response.data

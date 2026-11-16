@@ -1,23 +1,73 @@
 
 import { useEffect, useState } from 'react'
-import { getLeaderboard } from '../services/api.js'
+import { getLeaderboard, getLeaderboardOptions } from '../services/api.js'
+
+const scenarioLabels = {
+  powerOutage: 'Long-Term Power Outage',
+  winterStorm: 'Winter Storm',
+  tornado: 'Tornado',
+  flood: 'Flood'
+}
 
 export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [days, setDays] = useState(null)
+const [days, setDays] = useState(null)
+const [leaderboardOptions, setLeaderboardOptions] = useState([])
+const [selectedScenario, setSelectedScenario] = useState('')
 
-  useEffect(() => {
-    let active = true
 
-    async function loadLeaderboard() {
+
+
+useEffect(() => {
+  let active = true
+
+  async function loadOptions() {
+    try {
+      const response = await getLeaderboardOptions()
+      const options = response.data.options
+
+      if (active) {
+        setLeaderboardOptions(options)
+
+        if (options.length > 0) {
+          setSelectedScenario(options[0].scenario)
+          setDays(options[0].days)
+        }
+      }
+    } catch {
+      if (active) {
+        setError('Unable to load leaderboard options.')
+      }
+    }
+  }
+
+  loadOptions()
+
+  return () => {
+    active = false
+  }
+}, [])
+
+
+
+
+useEffect(() => {
+  if (!selectedScenario || days == null) return
+
+  let active = true
+
+  async function loadLeaderboard() {
+      setLoading(true)
+      setError('')
+      setLeaderboard([])
       try {
-        const response = await getLeaderboard('powerOutage')
+        const response = await getLeaderboard(selectedScenario, days)
 
         if (active) {
           setLeaderboard(response.data.leaderboard)
-          setDays(response.data.days)
+          
         }
       } catch {
         if (active) {
@@ -35,7 +85,7 @@ export default function LeaderboardPage() {
     return () => {
       active = false
     }
-  }, [])
+}, [selectedScenario, days])
 
   return (
     <main className="min-h-screen bg-[#101713] text-[#eaf2ea]">
@@ -50,9 +100,56 @@ export default function LeaderboardPage() {
 
         {days && (
           <p className="mt-1 text-sm text-[#b5c6b7]">
-            Ranked by each person's latest standard {days}-day power outage simulation.
+          Ranked by each person's latest {days}-day {scenarioLabels[selectedScenario] || selectedScenario} simulation.
           </p>
         )}
+
+        
+      <div className="mt-6 rounded-xl border border-[#304235] bg-[#18231c] p-5">
+        <label htmlFor="leaderboard-option" className="block text-sm font-medium">
+          Available Leaderboards
+        </label>
+
+        <select
+          id="leaderboard-option"
+          value={selectedScenario && days != null ? `${selectedScenario}|${days}` : ''}
+          onChange={(event) => {
+            const option = leaderboardOptions.find(
+              (item) => `${item.scenario}|${item.days}` === event.target.value
+            )
+
+            if (option) {
+              setSelectedScenario(option.scenario)
+              setDays(option.days)
+            }
+          }}
+          className="mt-2 w-full rounded-md border border-[#405a45] bg-[#101713] px-3 py-2 text-[#eaf2ea]"
+        >
+          {leaderboardOptions.length === 0 && (
+            <option value="">No leaderboards available</option>
+          )}
+
+
+          {leaderboardOptions.map((option) => (
+            <option
+              key={`${option.scenario}|${option.days}`}
+              value={`${option.scenario}|${option.days}`}
+            >
+              {scenarioLabels[option.scenario] || option.scenario}
+              {' — '}
+              {option.days} {option.days === 1 ? 'day' : 'days'}
+              {' ('}
+              {option.participants} {option.participants === 1 ? 'participant' : 'participants'}
+              {')'}
+            </option>
+          ))}
+
+        </select>
+      </div>
+
+          
+
+
 
         {loading && <p className="mt-8">Loading leaderboard...</p>}
 
