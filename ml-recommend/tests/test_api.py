@@ -35,6 +35,20 @@ def test_recommendations_are_returned_most_severe_first(client):
     assert "suggestions only" in body["data"]["advisory"]
 
 
+@pytest.mark.parametrize("scenario", ["flood", None, "notAScenario"])
+def test_scenario_is_optional_and_unknown_keys_still_work(client, scenario):
+    response = client.post("/recommendations", json={"scenario": scenario, "shortages": [
+        {"resource": "drinking_water", "severity": "critical",
+         "description": "Household of 4 has 0 of 6 gallons of drinking water needed for a 3-day flood."},
+    ]})
+    assert response.status_code == 200
+    assert response.json()["data"]["results"][0]["matched"] is True
+
+
+def test_overlong_scenario_is_rejected(client):
+    assert client.post("/recommendations", json={"scenario": "x" * 51, "shortages": []}).status_code == 422
+
+
 def test_empty_shortage_list_is_allowed(client):
     body = client.post("/recommendations", json={"shortages": []}).json()
     assert body["data"]["results"] == []

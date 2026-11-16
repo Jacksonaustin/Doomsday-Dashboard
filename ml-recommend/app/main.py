@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 
+from typing import Literal
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
@@ -17,18 +18,19 @@ async def lifespan(app):
 
 app = FastAPI(title="Doomsday Dashboard AI Service", lifespan=lifespan)
 
-SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2}
-
+SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
 class Shortage(BaseModel):
     resource: str = Field(min_length=1, max_length=50)
-    severity: str = Field(default="medium", max_length=20)
+    severity: Literal["critical", "high", "medium", "low"] = Field(default="medium", max_length=20)
     description: str = Field(min_length=1, max_length=500)
 
 
 class RecommendationRequest(BaseModel):
     shortages: list[Shortage] = Field(max_length=20)
     top_k: int = Field(default=3, ge=1, le=5)
+    # Optional, so older callers still work. Unknown keys rank like no scenario.
+    scenario: str | None = Field(default=None, max_length=50)
 
 
 @app.get("/health")
@@ -43,7 +45,7 @@ def recommendations(request: RecommendationRequest):
 
     results = []
     for shortage in shortages:
-        ranked = ranker.rank(shortage.description, resource=shortage.resource, top_k=request.top_k)
+        ranked = ranker.rank(shortage.description, resource=shortage.resource, top_k=request.top_k, scenario=request.scenario)
         results.append({"resource": shortage.resource, "severity": shortage.severity, **ranked})
 
     return {

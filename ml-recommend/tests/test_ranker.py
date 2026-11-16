@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from app.ranker import Ranker, load_catalog
@@ -72,13 +74,67 @@ def test_results_are_capped_and_sorted_by_confidence(semantic):
     ],
 )
 def test_long_power_outages_include_outage_specific_advice(semantic, resource, description):
-    ids = [r["id"] for r in semantic.rank(description, resource=resource)["recommendations"]]
+    result = semantic.rank(description, resource=resource, scenario="powerOutage")
+    ids = [r["id"] for r in result["recommendations"]]
     assert any(i.startswith("outage-") for i in ids), ids
 
 
 def test_short_disasters_still_lead_with_general_advice(semantic):
     result = semantic.rank(DRINKING, resource="drinking_water")  # 3-day tornado
     assert not result["recommendations"][0]["id"].startswith("outage-")
+
+
+def test_catalog_rejects_unknown_scenario_tags(tmp_path):
+    item = {"id": "x", "category": "water", "title": "t", "explanation": "e", "text": "t", "scenarios": ["tornadoo"]}
+    path = tmp_path / "catalog.json"
+    path.write_text(json.dumps([item]))
+    with pytest.raises(ValueError, match="unknown scenarios"):
+        load_catalog(path)
+
+
+FLOOD_WATER = "Household of 4 has 0 of 6 gallons of drinking water needed for a 3-day flood."
+WINTER_SANITATION = "Household of 3 has 0 of 1 pieces of sanitation supplies needed for a 7-day winter storm."
+
+
+@pytest.mark.parametrize("ranker_name", ["semantic", "tfidf"])
+def test_scenario_brings_in_advice_for_that_disaster(request, ranker_name):
+    result = request.getfixturevalue(ranker_name).rank(FLOOD_WATER, resource="drinking_water", scenario="flood")
+    assert "flood-water-unsafe-tap" in [r["id"] for r in result["recommendations"]]
+
+
+@pytest.mark.parametrize("ranker_name", ["semantic", "tfidf"])
+def test_advice_for_other_disasters_does_not_lead(request, ranker_name):
+    # Without the scenario, tornado cleanup advice topped this winter storm shortage.
+    result = request.getfixturevalue(ranker_name).rank(WINTER_SANITATION, resource="sanitation", scenario="winterStorm")
+    assert result["recommendations"][0]["id"] in {"sanitation-hygiene-kit", "sanitation-waste"}
+
+
+@pytest.mark.parametrize("ranker_name", ["semantic", "tfidf"])
+def test_scenario_does_not_override_the_shortage(request, ranker_name):
+    medication = "Household of 1 has 2 of 10 days of medication needed for a 10-day tornado."
+    result = request.getfixturevalue(ranker_name).rank(medication, resource="medication", scenario="tornado")
+    assert result["recommendations"][0]["id"] == "medical-prescriptions"
+
+
+def test_confidence_is_the_raw_score_not_the_boosted_one(semantic):
+    plain = semantic.rank(FLOOD_WATER, resource="drinking_water", top_k=5)
+    boosted = semantic.rank(FLOOD_WATER, resource="drinking_water", top_k=5, scenario="flood")
+    plain_scores = {r["id"]: r["confidence"] for r in plain["recommendations"]}
+    for r in boosted["recommendations"]:
+        if r["id"] in plain_scores:
+            assert r["confidence"] == plain_scores[r["id"]]
+
+
+@pytest.mark.parametrize("ranker_name", ["semantic", "tfidf"])
+def test_no_scenario_leads_with_general_advice(request, ranker_name):
+    # Older callers don't send a scenario: flood-only advice shouldn't top a tornado shortage.
+    result = request.getfixturevalue(ranker_name).rank(DRINKING, resource="drinking_water")
+    assert result["recommendations"][0]["id"] == "water-store-supply"
+
+
+def test_unknown_scenario_ranks_like_no_scenario(semantic):
+    plain = semantic.rank(FLOOD_WATER, resource="drinking_water")
+    assert semantic.rank(FLOOD_WATER, resource="drinking_water", scenario="earthquake") == plain
 
 
 @pytest.mark.parametrize("ranker_name", ["semantic", "tfidf"])

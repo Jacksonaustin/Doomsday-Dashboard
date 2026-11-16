@@ -97,6 +97,9 @@ test('only the fields the AI service needs are sent', async () => {
   await getRecommendations();
 
   assert.equal(aiRequests[0].path, '/recommendations');
+  assert.equal(aiRequests[0].body.scenario, 'tornado');
+  assert.deepEqual(Object.keys(aiRequests[0].body).sort(), ['scenario', 'shortages']);
+
   assert.deepEqual(aiRequests[0].body.shortages[0], {
     resource: 'drinking_water',
     severity: 'critical',
