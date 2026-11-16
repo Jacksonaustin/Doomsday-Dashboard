@@ -21,7 +21,6 @@ export default function ScenariosPage() {
     async function loadScenarios() {
       try {
         const response = await getSimulationScenarios()
-        console.log('Available scenarios:', response.data)
 
         if (active) {
           setScenarios(response.data.scenarios)
@@ -54,7 +53,6 @@ export default function ScenariosPage() {
         const response = await runSimulation(selectedScenario, duration)
 
         setSimulationResult(response.data)
-        console.log('Simulation result:', response)
       } catch (error) {
         setSimulationError(
           error.response?.data?.message || 'Unable to run simulation.'

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   getSimulations,
+  getSimulationScenarios,
   getRecommendations,
   getInventoryItems,
   getChecklistItems,
@@ -18,6 +19,8 @@ export default function RecommendationsPage() {
   const [selectedSimulationId, setSelectedSimulationId] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  // Scenario key -> display name, e.g. winterStorm -> Winter Storm
+  const [scenarioLabels, setScenarioLabels] = useState({})
 
   // AI recommendations
   const [recommendationData, setRecommendationData] = useState(null)
@@ -66,6 +69,25 @@ export default function RecommendationsPage() {
     }
 
     loadData()
+
+    return () => {
+      active = false
+    }
+  }, [])
+
+  // Load scenario names for the dropdown. If this fails, the raw keys are shown instead.
+  useEffect(() => {
+    let active = true
+
+    getSimulationScenarios()
+      .then((response) => {
+        if (active) {
+          setScenarioLabels(Object.fromEntries(
+            response.data.scenarios.map((scenario) => [scenario.key, scenario.label])
+          ))
+        }
+      })
+      .catch(() => {})
 
     return () => {
       active = false
@@ -307,7 +329,7 @@ export default function RecommendationsPage() {
                       key={simulation.id}
                       value={simulation.id}
                     >
-                      {simulation.scenario} - {new Date(simulation.createdAt).toLocaleString()}
+                      {scenarioLabels[simulation.scenario] ?? simulation.scenario} - {new Date(simulation.createdAt).toLocaleString()}
                     </option>
                   ))}
                 </select>

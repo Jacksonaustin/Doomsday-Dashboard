@@ -1,8 +1,10 @@
 import json
+import re
+from pathlib import Path
 
 import pytest
 
-from app.ranker import Ranker, load_catalog
+from app.ranker import SCENARIOS, Ranker, load_catalog
 
 # Real sentences in the gap engine's format.
 DRINKING = "Household of 4 has 3 of 6 gallons of drinking water needed for a 3-day tornado."
@@ -82,6 +84,14 @@ def test_long_power_outages_include_outage_specific_advice(semantic, resource, d
 def test_short_disasters_still_lead_with_general_advice(semantic):
     result = semantic.rank(DRINKING, resource="drinking_water")  # 3-day tornado
     assert not result["recommendations"][0]["id"].startswith("outage-")
+
+
+def test_scenarios_match_the_backend():
+    # The ranker copies the keys from the backend: a new scenario has to be added in both.
+    backend = Path(__file__).parents[2] / "backend" / "src" / "config" / "scenarios.js"
+    keys = set(re.findall(r"^\s{2}(\w+): \{", backend.read_text(), flags=re.MULTILINE))
+    assert keys, "no scenario keys found in scenarios.js"
+    assert keys == SCENARIOS
 
 
 def test_catalog_rejects_unknown_scenario_tags(tmp_path):
