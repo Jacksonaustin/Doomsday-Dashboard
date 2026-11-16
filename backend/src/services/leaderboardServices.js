@@ -3,11 +3,16 @@ const SimulationResult = require('../models/simulationResults')
 const { SCENARIOS } = require('../config/scenarios')
 const httpError = require('../utils/httpError')
 
-async function getLeaderboard(scenario = 'powerOutage') {
+async function getLeaderboard(scenario = 'powerOutage', days) {
   // Only allow scenarios defined by our backend
   if (!Object.hasOwn(SCENARIOS, scenario)) {
     throw httpError(400, 'Invalid disaster scenario')
   }
+  const selectedDays = days == null ? SCENARIOS[scenario].days : Number(days)
+
+if (!Number.isInteger(selectedDays) || selectedDays < 1 || selectedDays > 365) {
+  throw httpError(400, 'Duration must be between 1 and 365 days')
+}
 
   const results = await SimulationResult.aggregate([
     // Only compare the same disaster scenario
@@ -15,7 +20,9 @@ async function getLeaderboard(scenario = 'powerOutage') {
     {
       $match: {
         scenario,
-        days: { $in: [SCENARIOS[scenario].days, null] }
+        days: selectedDays === SCENARIOS[scenario].days
+          ? { $in: [selectedDays, null] }
+          : selectedDays
       }
     },
 
@@ -68,4 +75,59 @@ async function getLeaderboard(scenario = 'powerOutage') {
   }))
 }
 
-module.exports = { getLeaderboard }
+
+async function getLeaderboardOptions() {
+  const results = await SimulationResult.aggregate([
+
+    {
+      $project: {
+        userId: 1,
+        scenario: 1,
+        days: {
+          $ifNull: [
+            '$days',
+            {
+              $switch: {
+                branches: Object.entries(SCENARIOS).map(([key, config]) => ({
+                  case: { $eq: ['$scenario', key] },
+                  then: config.days
+                })),
+                default: null
+              }
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      $group: {
+        _id: {
+          scenario: '$scenario',
+          days: '$days',
+          userId: '$userId'
+        }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          scenario: '$_id.scenario',
+          days: '$_id.days'
+        },
+        participants: { $sum: 1 }
+      }
+    },
+    {
+      $sort: {
+        '_id.scenario': 1,
+        '_id.days': 1
+      }
+    }
+  ])
+
+  return results
+}
+
+
+module.exports = { getLeaderboard, getLeaderboardOptions }

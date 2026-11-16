@@ -8,6 +8,9 @@ const router = express.Router()
 // Only logged-in users can view the leaderboard
 router.use(authMiddleware)
 
+// GET /api/leaderboard/options
+router.get('/options', leaderboardController.options)
+
 // GET /api/leaderboard
 router.get('/', leaderboardController.list)
 

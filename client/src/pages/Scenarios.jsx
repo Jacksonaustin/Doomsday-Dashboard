@@ -1,12 +1,49 @@
-import { useState } from "react"
-import "./Scenarios.css"
-import { runSimulation } from '../services/api.js'
+import { useEffect, useState } from 'react'
+import './Scenarios.css'
+import { getSimulationScenarios, runSimulation } from '../services/api.js'
 
 export default function ScenariosPage() {
-    const [duration, setDuration] = useState(7)
+    const [duration, setDuration] = useState(14)
+    const [scenarios, setScenarios] = useState([])
+    const [selectedScenario, setSelectedScenario] = useState('powerOutage')
+    const [scenariosLoading, setScenariosLoading] = useState(true)
+    const [scenariosError, setScenariosError] = useState('')
     const [simulationResult, setSimulationResult] = useState(null)
     const [runningSimulation, setRunningSimulation] = useState(false)
     const [simulationError, setSimulationError] = useState('')
+    const currentScenario = scenarios.find(
+  (scenario) => scenario.key === selectedScenario
+)
+
+      useEffect(() => {
+    let active = true
+
+    async function loadScenarios() {
+      try {
+        const response = await getSimulationScenarios()
+        console.log('Available scenarios:', response.data)
+
+        if (active) {
+          setScenarios(response.data.scenarios)
+          setScenariosError('')
+        }
+      } catch {
+        if (active) {
+          setScenariosError('Unable to load disaster scenarios.')
+        }
+      } finally {
+        if (active) {
+          setScenariosLoading(false)
+        }
+      }
+    }
+
+    loadScenarios()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
     async function handleRunSimulation() {
       setRunningSimulation(true)
@@ -14,10 +51,10 @@ export default function ScenariosPage() {
       setSimulationResult(null)
 
       try {
-        const response = await runSimulation('powerOutage', duration)
+        const response = await runSimulation(selectedScenario, duration)
 
         setSimulationResult(response.data)
-        console.log('Simulation result:', response.data)
+        console.log('Simulation result:', response)
       } catch (error) {
         setSimulationError(
           error.response?.data?.message || 'Unable to run simulation.'
@@ -50,27 +87,79 @@ export default function ScenariosPage() {
             </h2>
 
 
+
 {/* Selected disaster scenario */}
 <div className="mt-6 rounded-lg border border-[#405a45] bg-[#304235] p-4">
-  <h3 className="font-semibold text-[#eaf2ea]">
-    Extended Power Outage
-  </h3>
+  <label htmlFor="scenario-select" className="block text-sm font-medium">
+    Disaster Type
+  </label>
 
-  <p className="mt-2 text-sm text-[#b5c6b7]">
-    Evaluate your household resources during a loss of electricity.
-  </p>
+  <select
+    id="scenario-select"
+    value={selectedScenario}
+    onChange={(event) => {
+      const key = event.target.value
+      setSelectedScenario(key)
+
+      const scenario = scenarios.find((item) => item.key === key)
+      if (scenario) setDuration(scenario.days)
+
+      setSimulationResult(null)
+    }}
+    disabled={scenariosLoading || !!scenariosError || runningSimulation}
+    className="mt-3 w-full rounded-md border border-[#405a45] bg-[#18231c] px-3 py-2 text-[#eaf2ea]"
+  >
+    {scenarios.map((scenario) => (
+      <option key={scenario.key} value={scenario.key}>
+        {scenario.label}
+      </option>
+    ))}
+  </select>
+
+  {scenariosLoading && (
+    <p className="mt-2 text-sm text-[#b5c6b7]">Loading disasters...</p>
+  )}
+
+  {scenariosError && (
+    <p className="mt-2 text-sm text-red-400">{scenariosError}</p>
+  )}
+
+  {currentScenario && (
+    <p className="mt-3 text-sm text-[#b5c6b7]">
+      Default duration: {currentScenario.days} days
+    </p>
+  )}
 </div>
+
 
         {/* Simulation duration */}
         <div className="mt-6">
         <div className="flex items-center justify-between">
             <label htmlFor="simulation-duration" className="text-sm font-medium">
-            Outage Duration
+            Simulation Duration
             </label>
 
-            <span className="font-semibold text-[#b6db8a]">
-            {duration} {duration === 1 ? "day" : "days"}
+            
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min="1"
+              max="365"
+              value={duration}
+              onChange={(event) => {
+                const value = Number(event.target.value)
+                if (Number.isInteger(value) && value >= 1 && value <= 365) {
+                  setDuration(value)
+                }
+              }}
+              className="w-20 rounded-md border border-[#405a45] bg-[#101713] px-2 py-1 text-right text-[#b6db8a]"
+              aria-label="Simulation duration in days"
+            />
+            <span className="text-sm text-[#b5c6b7]">
+              {duration === 1 ? 'day' : 'days'}
             </span>
+          </div>
+
         </div>
 
 
@@ -79,7 +168,7 @@ export default function ScenariosPage() {
             id="simulation-duration"
             type="range"
             min="1"
-            max="30"
+            max="365"
             step="1"
             value={duration}
             onChange={(event) => setDuration(Number(event.target.value))}
@@ -90,14 +179,14 @@ export default function ScenariosPage() {
 
         <div className="mt-2 flex justify-between text-xs text-[#b5c6b7]">
           <span>1 day</span>
-          <span>30 days</span>
+          <span>365 days</span>
         </div>
 
         {/* Run Simulation button */}
         <button
           type="button"
           onClick={handleRunSimulation}
-          disabled={runningSimulation}
+          disabled={runningSimulation || scenariosLoading || !!scenariosError || !currentScenario}
           className="mt-6 w-full rounded-md bg-[#b6db8a] px-4 py-3 text-sm font-semibold text-[#101713] transition-colors hover:bg-[#c9eca0] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {runningSimulation ? 'Running Simulation...' : 'Run Simulation'}
@@ -143,7 +232,7 @@ export default function ScenariosPage() {
         </p>
 
         <p className="mt-2 text-xs text-[#b5c6b7]">
-          For a {simulationResult.days}-day outage, based on your household supplies.
+          For a {simulationResult.days}-day disaster scenario, based on your household supplies.
         </p>
       </div>
 
@@ -248,7 +337,7 @@ export default function ScenariosPage() {
 
       <p className="mt-2 max-w-xs text-sm text-[#b5c6b7]">
         Run a simulation to see how your household supplies
-        hold up during a power outage.
+        hold up during the selected disaster.
       </p>
     </div>
   )}

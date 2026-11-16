@@ -59,6 +59,63 @@ test('only standard-length runs of the scenario are ranked', async () => {
   assert.deepEqual(pipelines[0][0], { $match: { scenario: 'tornado', days: { $in: [3, null] } } });
 });
 
+
+test('custom-duration leaderboards use an exact match', async () => {
+  const response = await request('/api/leaderboard?scenario=winterStorm&days=145');
+
+  assert.equal(response.status, 200);
+
+  assert.deepEqual(pipelines[0][0], {
+    $match: {
+      scenario: 'winterStorm',
+      days: 145
+    }
+  });
+
+  const body = await response.json();
+  assert.equal(body.data.days, 145);
+});
+
+
+test('default-duration leaderboards include older simulations', async () => {
+  const response = await request('/api/leaderboard?scenario=powerOutage&days=14');
+
+  assert.equal(response.status, 200);
+
+  assert.deepEqual(pipelines[0][0], {
+    $match: {
+      scenario: 'powerOutage',
+      days: { $in: [14, null] }
+    }
+  });
+});
+
+
+test('available leaderboard options are returned correctly', async () => {
+  rows = [
+    {
+      _id: { scenario: 'powerOutage', days: 14 },
+      participants: 4
+    },
+    {
+      _id: { scenario: 'winterStorm', days: 145 },
+      participants: 1
+    }
+  ];
+
+  const response = await request('/api/leaderboard/options');
+  assert.equal(response.status, 200);
+
+  const body = await response.json();
+
+  assert.deepEqual(body.data.options, [
+    { scenario: 'powerOutage', days: 14, participants: 4 },
+    { scenario: 'winterStorm', days: 145, participants: 1 }
+  ]);
+});
+
+
+
 test('rows are ranked and include survival days and the standard length', async () => {
   const body = await (await request('/api/leaderboard')).json();
 
