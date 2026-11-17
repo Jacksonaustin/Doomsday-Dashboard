@@ -24,12 +24,13 @@ res.status(200).json({
 }
 async function options(req, res, next) {
   try {
-    const results = await leaderboardServices.getLeaderboardOptions()
+    const results = await leaderboardServices.getLeaderboardOptions(req.auth.userId)
 
     const options = results.map((result) => ({
       scenario: result._id.scenario,
       days: result._id.days,
-      participants: result.participants
+      participants: result.participants,
+      participated: result.myParticipation > 0
     }))
 
     res.status(200).json({

@@ -92,26 +92,38 @@ test('default-duration leaderboards include older simulations', async () => {
 
 
 test('available leaderboard options are returned correctly', async () => {
-  rows = [
-    {
-      _id: { scenario: 'powerOutage', days: 14 },
-      participants: 4
-    },
-    {
-      _id: { scenario: 'winterStorm', days: 145 },
-      participants: 1
-    }
-  ];
+rows = [
+  {
+    _id: { scenario: 'powerOutage', days: 14 },
+    participants: 4,
+    myParticipation: 1
+  },
+  {
+    _id: { scenario: 'winterStorm', days: 145 },
+    participants: 1,
+    myParticipation: 0
+  }
+];
 
   const response = await request('/api/leaderboard/options');
   assert.equal(response.status, 200);
 
   const body = await response.json();
 
-  assert.deepEqual(body.data.options, [
-    { scenario: 'powerOutage', days: 14, participants: 4 },
-    { scenario: 'winterStorm', days: 145, participants: 1 }
-  ]);
+    assert.deepEqual(body.data.options, [
+      {
+        scenario: 'powerOutage',
+        days: 14,
+        participants: 4,
+        participated: true
+      },
+      {
+        scenario: 'winterStorm',
+        days: 145,
+        participants: 1,
+        participated: false
+      }
+    ]);
 });
 
 

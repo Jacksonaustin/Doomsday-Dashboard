@@ -76,7 +76,7 @@ if (!Number.isInteger(selectedDays) || selectedDays < 1 || selectedDays > 365) {
 }
 
 
-async function getLeaderboardOptions() {
+async function getLeaderboardOptions(userId) {
   const results = await SimulationResult.aggregate([
 
     {
@@ -109,15 +109,24 @@ async function getLeaderboardOptions() {
         }
       }
     },
-    {
-      $group: {
-        _id: {
-          scenario: '$_id.scenario',
-          days: '$_id.days'
-        },
-        participants: { $sum: 1 }
+  {
+    $group: {
+      _id: {
+        scenario: '$_id.scenario',
+        days: '$_id.days'
+      },
+      participants: { $sum: 1 },
+      myParticipation: {
+        $sum: {
+          $cond: [
+            { $eq: [{ $toString: '$_id.userId' }, userId] },
+            1,
+            0
+          ]
+        }
       }
-    },
+    }
+  },
     {
       $sort: {
         '_id.scenario': 1,
