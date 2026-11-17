@@ -19,8 +19,11 @@ MODEL_NAME = "all-MiniLM-L6-v2"
 
 # Scores mean different things for each method, so each has its own thresholds.
 # Set from the gap engine's real shortage sentences: retune if the catalog or sentences change.
+# semantic: real top answers score 0.34 and up, unrelated sentences 0.29 at most.
+# tfidf: the two overlap (some right answers score ~0.06, small talk can reach ~0.22),
+# so a lower low_confidence would mark junk as confident. Expect more flags on the fallback.
 THRESHOLDS = {
-    "semantic": {"low_confidence": 0.35, "no_match": 0.15},
+    "semantic": {"low_confidence": 0.32, "no_match": 0.15},
     "tfidf": {"low_confidence": 0.2, "no_match": 0.05},
 }
 
@@ -38,8 +41,19 @@ RESOURCE_CATEGORIES = {
     "shelter": ["shelter"],
     "sanitation": ["sanitation"],
     "infant_food": ["infant"],
-    "pet_food": ["pets"]
+    "pet_food": ["pets"],
 }
+
+# Scenario keys from backend/src/config/scenarios.js. Keep in sync when a scenario is added.
+SCENARIOS = {"tornado", "winterStorm", "powerOutage", "flood"}
+
+# Added to the score of items tagged for the request's scenario, and taken off items
+# tagged only for other scenarios (or when no scenario is sent). Untagged (general)
+# items are left alone.
+# Only the ranking uses it: the confidence shown is still the raw similarity.
+# Picked by sweeping 0 to 0.1 with eval/run_eval.py: higher values cut wrong-scenario
+# advice further but start putting scenario items above the advice the shortage needs.
+SCENARIO_BOOST = {"semantic": 0.05, "tfidf": 0.05}
 
 GENERIC_ADVICE = {
     "id": "generic-kit",
@@ -55,7 +69,10 @@ def load_catalog(path=CATALOG_PATH):
     for item in catalog:
         missing = {"id", "category", "title", "explanation", "text"} - item.keys()
         if missing:
-            raise ValueError(f"Catalog item {item.get('id')} is missing {sorted(missing)}")
+            raise ValueError(f"Catalog item {item.get('id')} is missing {sorted(missing)}");
+        unknown = set(item.get("scenarios", [])) - SCENARIOS
+        if unknown:
+            raise ValueError(f"Catalog item {item['id']} has unknown scenarios {sorted(unknown)}")
     return catalog
 
 
@@ -89,20 +106,31 @@ class Ranker:
             return (query_embedding @ self.catalog_embeddings.T)[0].tolist()
         return cosine_similarity(self.tfidf.transform([query]), self.tfidf_catalog)[0].tolist()
 
-    def rank(self, query, resource=None, top_k=3):
+    def _scenario_adjustment(self, item, scenario):
+        tags = item.get("scenarios")
+        if not tags:
+            return 0.0
+        boost = SCENARIO_BOOST[self.method]
+        # No (or an unknown) scenario: we can't tell which disaster it is, so general
+        # advice goes first instead of advice written for some other disaster.
+        return boost if scenario in tags else -boost
+
+    def rank(self, query, resource=None, top_k=3, scenario=None):
         thresholds = THRESHOLDS[self.method]
         scored = zip(self._scores(query), self.catalog)
 
         # Known resource: only rank catalog items in its categories.
         # Unknown resource: search the whole catalog.
         categories = RESOURCE_CATEGORIES.get(resource)
+       
         if categories:
             scored = [(score, item) for score, item in scored if item["category"] in categories]
 
         # Drop weak matches, so a 0.0 score is never shown as a recommendation.
+        # The no_match check uses the raw score, so a boost can't rescue an unrelated item.
         ranked = sorted(
             [(score, item) for score, item in scored if score >= thresholds["no_match"]],
-            key=lambda pair: pair[0],
+            key=lambda pair: pair[0] + self._scenario_adjustment(pair[1], scenario),
             reverse=True,
         )
 

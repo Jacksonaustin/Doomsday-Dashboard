@@ -16,7 +16,7 @@ const GENERIC_MESSAGE = {
   confidence: null
 };
 
-async function fetchFromAiService(shortages) {
+async function fetchFromAiService(shortages, scenario) {
   const baseURL = process.env.AI_SERVICE_URL;
   if (!baseURL) {
     throw new Error('AI_SERVICE_URL is not set');
@@ -26,6 +26,8 @@ async function fetchFromAiService(shortages) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      // Lets the AI service favor advice written for this disaster.
+      scenario,
       shortages: shortages
         .slice(0, MAX_SHORTAGES)
         .map(({ resource, severity, description }) => ({ resource, severity, description }))
@@ -63,7 +65,7 @@ async function getRecommendations(userId, resultId) {
   }
 
   try {
-    const data = await fetchFromAiService(result.shortages);
+    const data = await fetchFromAiService(result.shortages, result.scenario);
     return { source: 'ai', method: data.method, advisory: ADVISORY, results: data.results };
   } catch (error) {
     console.error('AI service unavailable, using generic advice:', error.message);

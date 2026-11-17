@@ -151,14 +151,16 @@
     "category": "shelter",
     "title": "Pick a safe room for storms",
     "explanation": "For tornadoes, use a basement or an interior room on the lowest floor with no windows.",
-    "text": "tornado shelter, safe place in the house, storm protection, shelter in place"
+    "text": "tornado shelter, safe place in the house, storm protection, shelter in place",
+    "scenarios": ["tornado"]
   },
   {
     "id": "shelter-warmth",
     "category": "shelter",
     "title": "Keep blankets and warm clothing",
     "explanation": "Sleeping bags, wool blankets and layers keep everyone warm if the heat goes out in a winter storm.",
-    "text": "staying warm without heat, winter storm, blankets and warm clothing, cold weather shelter"
+    "text": "staying warm without heat, warmth and shelter in cold weather, blankets and warm clothing, winter storm",
+    "scenarios": ["winterStorm", "powerOutage"]
   },
   {
     "id": "shelter-go-bag",
@@ -172,84 +174,96 @@
     "category": "food",
     "title": "Keep the fridge and freezer closed during an outage",
     "explanation": "A closed refrigerator keeps food safe for about 4 hours. A full freezer lasts about 48 hours, or 24 if half full. Throw out perishable food that has been above 40°F for more than 2 hours.",
-    "text": "food spoiling in the refrigerator during a long power outage, freezer food safety without electricity, perishable food going bad"
+    "text": "food spoiling in the refrigerator during a long power outage, freezer food safety without electricity, perishable food going bad",
+    "scenarios": ["powerOutage", "winterStorm"]
   },
   {
     "id": "outage-food-outdoor-cooking",
     "category": "food",
     "title": "Have a safe way to cook outdoors",
     "explanation": "A camp stove or grill lets you cook during a long outage. Only use them outside, away from doors and windows, because of carbon monoxide.",
-    "text": "cooking food during an extended power outage, no electric stove, camp stove or grill outdoors, hot meals without power"
+    "text": "cooking food during an extended power outage, no electric stove, camp stove or grill outdoors, hot meals without power",
+    "scenarios": ["powerOutage"]
   },
   {
     "id": "outage-water-pump",
     "category": "water",
     "title": "Plan for water if pumps stop working",
     "explanation": "Well pumps need electricity, and city water pressure can drop in a long outage. Store extra water and know where to get more.",
-    "text": "no running water during a long power outage, well pump without electricity, water pressure lost, extended outage water supply"
+    "text": "no running water during a long power outage, well pump without electricity, water pressure lost, extended outage water supply",
+    "scenarios": ["powerOutage"]
   },
   {
     "id": "outage-water-boil",
     "category": "water",
     "title": "Follow boil-water notices",
     "explanation": "If officials issue a boil-water notice, bring water to a rolling boil for at least 1 minute before drinking or cooking with it.",
-    "text": "boil water advisory after power outage, unsafe tap water, make drinking water safe, water treatment plant without power"
+    "text": "boil water advisory after power outage, unsafe tap water, make drinking water safe, water treatment plant without power",
+    "scenarios": ["powerOutage", "flood"]
   },
   {
     "id": "outage-medical-refrigerated",
     "category": "medical",
     "title": "Plan for medications that need refrigeration",
     "explanation": "Ask your pharmacist how long medications like insulin stay effective without refrigeration. Keep a cooler and ice packs ready.",
-    "text": "medication needs refrigeration during a power outage, insulin without electricity, keep medicine cold in a long outage"
+    "text": "medication needs refrigeration during a power outage, insulin without electricity, keep medicine cold in a long outage",
+    "scenarios": ["powerOutage"]
   },
   {
     "id": "outage-medical-equipment",
     "category": "medical",
     "title": "Have backup power for medical equipment",
     "explanation": "If anyone uses a CPAP, oxygen concentrator or other powered device, keep a backup battery. Ask your utility about registering as a medical priority customer.",
-    "text": "medical equipment needs electricity, CPAP or oxygen during a power outage, powered medical device backup battery"
+    "text": "medical equipment needs electricity, CPAP or oxygen during a power outage, powered medical device backup battery",
+    "scenarios": ["powerOutage"]
   },
   {
     "id": "outage-power-fuel",
     "category": "power",
     "title": "Store generator fuel safely",
     "explanation": "Keep fuel in approved containers outside your living space, away from heat. Rotate it every few months so it stays usable.",
-    "text": "fuel for a generator during an extended power outage, gasoline storage, run backup power for several days"
+    "text": "fuel for a generator during an extended power outage, gasoline storage, run backup power for several days",
+    "scenarios": ["powerOutage"]
   },
   {
     "id": "outage-power-charge-early",
     "category": "power",
     "title": "Charge everything while you still have power",
     "explanation": "When an outage is forecast, charge phones, battery packs and rechargeable lights. Unplug electronics to protect them from power surges when it returns.",
-    "text": "prepare for a forecast power outage, charge devices before the power goes out, power surge when electricity returns"
+    "text": "prepare for a forecast power outage, charge devices before the power goes out, power surge when electricity returns",
+    "scenarios": ["powerOutage", "winterStorm"]
   },
   {
     "id": "outage-lighting-rechargeable",
     "category": "lighting",
     "title": "Add rechargeable or solar lights for long outages",
     "explanation": "Over many days, rechargeable or solar lanterns save batteries. Avoid candles, which are a fire risk.",
-    "text": "lighting for an extended power outage, many days without electricity, rechargeable solar lantern, avoid candles"
+    "text": "lighting for an extended power outage, many days without electricity, rechargeable solar lantern, avoid candles",
+    "scenarios": ["powerOutage"]
   },
   {
     "id": "outage-communication-updates",
     "category": "communication",
     "title": "Track the outage and save phone battery",
     "explanation": "Check your utility's outage map and sign up for its alerts. Text instead of calling, and lower screen brightness to make your battery last.",
-    "text": "updates during a long power outage, utility outage map and alerts, save phone battery, how long will the outage last"
+    "text": "updates during a long power outage, utility outage map and alerts, save phone battery, how long will the outage last",
+    "scenarios": ["powerOutage"]
   },
   {
     "id": "outage-shelter-heat",
     "category": "shelter",
     "title": "Stay cool in a summer outage",
     "explanation": "Without air conditioning, close blinds, drink plenty of water and use the lowest floor. Find your nearest cooling center in case it gets too hot.",
-    "text": "extreme heat during a power outage, no air conditioning, staying cool without electricity, cooling center"
+    "text": "extreme heat during a power outage, no air conditioning, staying cool without electricity, cooling center",
+    "scenarios": ["powerOutage"]
   },
   {
     "id": "outage-shelter-cold",
     "category": "shelter",
     "title": "Heat your home safely in a winter outage",
     "explanation": "Never use a gas oven, stove or grill to heat your home. Gather everyone in one room, close off others and use extra layers.",
-    "text": "no heat during a winter power outage, staying warm without electricity, unsafe heating, carbon monoxide from heaters"
+    "text": "no heat during a winter power outage, staying warm without electricity, unsafe heating, carbon monoxide from heaters",
+    "scenarios": ["powerOutage", "winterStorm"]
   },
   {
     "id": "infant-formula",
@@ -270,7 +284,8 @@
     "category": "infant",
     "title": "Plan to feed your baby without power",
     "explanation": "Ready-to-feed formula needs no mixing, which helps if clean water is limited. Follow the label for how long opened formula is safe without refrigeration.",
-    "text": "long-term power outage with a baby, no refrigerator or electricity for days, opened formula without refrigeration"
+    "text": "long-term power outage with a baby, no refrigerator or electricity for days, opened formula without refrigeration",
+    "scenarios": ["powerOutage"]
   },
   {
     "id": "pet-food-supply",
@@ -291,6 +306,174 @@
     "category": "pets",
     "title": "Plan where your pets can stay if you evacuate",
     "explanation": "Not every shelter accepts pets. Find pet-friendly shelters, hotels or friends outside your area ahead of time.",
-    "text": "evacuating with pets, pet friendly shelter, where pets can stay, flood or tornado with pets"
+    "text": "evacuating with pets, pet friendly shelter, where pets can stay, leaving home with pets"
+  },
+  {
+    "id": "tornado-water-safe-room",
+    "category": "water",
+    "scenarios": ["tornado"],
+    "title": "Keep water in your safe room",
+    "explanation": "Store a few gallons where you will shelter. After a tornado, damaged water lines can stop service or make tap water unsafe, so listen for boil-water notices.",
+    "text": "drinking water stored in the safe room or basement, water lines damaged by high winds"
+  },
+  {
+    "id": "tornado-food-safe-room",
+    "category": "food",
+    "scenarios": ["tornado"],
+    "title": "Keep ready-to-eat food near your shelter",
+    "explanation": "Store a few days of food that needs no cooking in your safe room or basement. Throw out any food that may have broken glass or debris in it.",
+    "text": "food stored in the safe room or basement, ready to eat meals after the storm, food exposed to debris or broken glass"
+  },
+  {
+    "id": "tornado-medical-debris-injuries",
+    "category": "medical",
+    "scenarios": ["tornado"],
+    "title": "Stock your kit for cuts from debris",
+    "explanation": "Most tornado injuries come from flying or fallen debris. Include gauze, bandages, tape and gloves, and see a doctor about a tetanus shot if you are cut during cleanup.",
+    "text": "first aid kit for cuts and wounds from flying debris and broken glass, injury treatment after wind damage"
+  },
+  {
+    "id": "tornado-lighting-gas-leak",
+    "category": "lighting",
+    "scenarios": ["tornado"],
+    "title": "Use flashlights, not candles, after a tornado",
+    "explanation": "Tornadoes can break gas lines. Keep a flashlight in your safe room, and never light candles or matches if you smell gas.",
+    "text": "flashlight in the safe room, light at night after wind damage, avoid candles because of gas leaks"
+  },
+  {
+    "id": "tornado-communication-alerts",
+    "category": "communication",
+    "scenarios": ["tornado"],
+    "title": "Get tornado warnings even while you sleep",
+    "explanation": "Outdoor sirens are hard to hear indoors. A weather radio with an alarm and phone alerts can wake you, and a tornado warning means take shelter now.",
+    "text": "weather radio with an alarm, warning sirens hard to hear indoors, take shelter now alerts, emergency radio"
+  },
+  {
+    "id": "tornado-sanitation-cleanup",
+    "category": "sanitation",
+    "scenarios": ["tornado"],
+    "title": "Clean up tornado damage safely",
+    "explanation": "Wear gloves, long sleeves and sturdy shoes around debris, and keep soap and hand sanitizer for washing up afterward.",
+    "text": "sanitation while cleaning up debris and broken glass, gloves and sturdy shoes, soap and hand sanitizer after wind damage"
+  },
+  {
+    "id": "tornado-shelter-protect-head",
+    "category": "shelter",
+    "scenarios": ["tornado"],
+    "title": "Protect your head and feet in the safe room",
+    "explanation": "Cover your head and neck with your arms, a helmet or a thick blanket. Keep sturdy shoes in the safe room so you can walk over debris afterward.",
+    "text": "shelter supplies for the safe room, protect head and neck from flying debris, helmet blanket and sturdy shoes"
+  },
+  {
+    "id": "flood-water-unsafe-tap",
+    "category": "water",
+    "scenarios": ["flood"],
+    "title": "Don't drink tap water until officials say it's safe",
+    "explanation": "Floodwater can contaminate city water and wells. Use stored water until officials clear it, and have a flooded well tested before drinking from it.",
+    "text": "drinking water contaminated by floodwater, unsafe tap water and wells, do not drink from the tap"
+  },
+  {
+    "id": "flood-food-discard",
+    "category": "food",
+    "scenarios": ["flood"],
+    "title": "Store food high and throw out anything floodwater touches",
+    "explanation": "Keep food in waterproof containers above the flood line. Throw out food that touched floodwater, except undamaged commercial cans you wash and sanitize.",
+    "text": "food touched by floodwater, waterproof food storage above the water line, throw out contaminated food"
+  },
+  {
+    "id": "flood-medical-waterproof",
+    "category": "medical",
+    "scenarios": ["flood"],
+    "title": "Keep medicine and first aid supplies waterproof",
+    "explanation": "Store your first aid kit and medications in a waterproof container you can grab if you evacuate. Throw out medicine that got wet with floodwater.",
+    "text": "first aid kit and medication in a waterproof container, medicine wet from floodwater"
+  },
+  {
+    "id": "flood-lighting-electrical",
+    "category": "lighting",
+    "scenarios": ["flood"],
+    "title": "Use flashlights in a flooded home",
+    "explanation": "Never use candles, and don't turn on lights or power in a flooded home until an electrician says it's safe. Wet wiring can shock you.",
+    "text": "flashlight in a home with water damage, no power because of wet wiring, electrical shock hazards"
+  },
+  {
+    "id": "flood-communication-alerts",
+    "category": "communication",
+    "scenarios": ["flood"],
+    "title": "Act fast on flash flood warnings",
+    "explanation": "A flash flood warning means move to higher ground now. A weather radio and phone alerts let you hear warnings even if the power is out.",
+    "text": "flash flood warning alerts, move to higher ground now, emergency radio when the power is out"
+  },
+  {
+    "id": "flood-shelter-high-ground",
+    "category": "shelter",
+    "scenarios": ["flood"],
+    "title": "Know your route to higher ground",
+    "explanation": "Plan where you will go and how to get there. Never walk or drive through floodwater: six inches of moving water can knock you down and one foot can carry away a car.",
+    "text": "shelter on higher ground, evacuation route, never walk or drive through moving water"
+  },
+  {
+    "id": "flood-sanitation-cleanup",
+    "category": "sanitation",
+    "scenarios": ["flood"],
+    "title": "Protect yourself during flood cleanup",
+    "explanation": "Floodwater carries sewage. Wear rubber gloves and boots, wash hands with soap and clean water, and never mix bleach with ammonia.",
+    "text": "sanitation while cleaning up sewage in floodwater, rubber gloves and boots, disinfect the home, wash hands"
+  },
+  {
+    "id": "winter-water-frozen-pipes",
+    "category": "water",
+    "scenarios": ["winterStorm"],
+    "title": "Store water in case pipes freeze",
+    "explanation": "Frozen pipes can cut off your water or burst. Store water before the storm, let faucets drip in extreme cold and know how to shut off your main valve.",
+    "text": "drinking water when pipes freeze or burst, no running water in freezing weather, let faucets drip"
+  },
+  {
+    "id": "winter-food-body-heat",
+    "category": "food",
+    "scenarios": ["winterStorm"],
+    "title": "Eat regularly to stay warm",
+    "explanation": "Food gives your body the energy to make heat. Keep high-calorie foods that need no cooking, drink plenty of fluids and avoid alcohol.",
+    "text": "high calorie food to stay warm, eating regularly in freezing cold, meals without cooking"
+  },
+  {
+    "id": "winter-medical-frostbite",
+    "category": "medical",
+    "scenarios": ["winterStorm"],
+    "title": "Know the signs of frostbite and hypothermia",
+    "explanation": "Watch for numb, pale skin and for shivering, confusion or slurred speech. Warm the person slowly and get medical help, since roads may be closed.",
+    "text": "first aid for frostbite and hypothermia, cold weather injuries, medical help when roads are icy"
+  },
+  {
+    "id": "winter-lighting-long-nights",
+    "category": "lighting",
+    "scenarios": ["winterStorm"],
+    "title": "Plan for long dark nights",
+    "explanation": "Winter storms bring long nights and often power outages. Keep flashlights and spare batteries, and use them instead of candles near blankets and heaters.",
+    "text": "flashlight for long dark nights, lighting when snow and ice knock out power, avoid candles near blankets"
+  },
+  {
+    "id": "winter-communication-check-in",
+    "category": "communication",
+    "scenarios": ["winterStorm"],
+    "title": "Follow winter storm warnings and check on others",
+    "explanation": "A weather radio keeps you updated if power and internet go out. Check on older neighbors and anyone living alone during the storm.",
+    "text": "emergency radio updates in snow and ice, check on older neighbors, weather warnings"
+  },
+  {
+    "id": "winter-shelter-space-heaters",
+    "category": "shelter",
+    "scenarios": ["winterStorm"],
+    "title": "Use space heaters safely",
+    "explanation": "Keep heaters 3 feet from anything that can burn, plug them straight into the wall and turn them off when you sleep. Have working smoke and carbon monoxide alarms.",
+    "text": "warmth without unsafe heating, space heater safety, staying warm indoors in freezing cold, carbon monoxide and fire risk"
+  },
+  {
+    "id": "winter-shelter-car-kit",
+    "category": "shelter",
+    "scenarios": ["winterStorm"],
+    "title": "Keep a winter kit in your car",
+    "explanation": "Pack blankets, warm clothes, water, snacks, an ice scraper and sand. If you get stranded, stay with your car and run the engine only 10 minutes an hour.",
+    "text": "warmth in the car, emergency car kit, stranded in snow, blankets and warm clothes, travel in icy weather"
   }
 ]

@@ -3,13 +3,13 @@
 Run from the ml-recommend folder:
     python -m eval.run_eval
     python -m eval.run_eval --method tfidf --show-misses
+    python -m eval.run_eval --ignore-scenario   # rank as if the scenario key wasn't sent
 """
 import argparse
 import json
 from collections import defaultdict
 from pathlib import Path
-
-from app.ranker import RESOURCE_CATEGORIES, THRESHOLDS, Ranker, load_catalog
+from app.ranker import RESOURCE_CATEGORIES, SCENARIOS, THRESHOLDS, Ranker, load_catalog
 
 LABELED_PATH = Path(__file__).parent / "labeled.json"
 
@@ -24,6 +24,9 @@ def load_cases(path, catalog):
         resource = case.get("resource")
         if resource not in RESOURCE_CATEGORIES:
             problems.append(f"case {number}: unknown resource {resource!r}")
+            continue
+        if case.get("scenario") not in SCENARIOS:
+            problems.append(f"case {number}: unknown scenario {case.get('scenario')!r}")
             continue
         if not case.get("description") or not case.get("good"):
             problems.append(f"case {number}: needs a description and at least one good id")
@@ -56,11 +59,14 @@ def best_scores(ranker, case):
     return max(right), (max(wrong) if wrong else None)
 
 
-def evaluate(ranker, cases, top_k):
+def evaluate(ranker, cases, top_k, use_scenario=True):
+    tags = {item["id"]: set(item.get("scenarios", [])) for item in ranker.catalog}
     rows = []
     for case in cases:
-        result = ranker.rank(case["description"], resource=case["resource"], top_k=top_k)
+        scenario = case["scenario"] if use_scenario else None
+        result = ranker.rank(case["description"], resource=case["resource"], top_k=top_k, scenario=scenario)
         returned = [r["id"] for r in result["recommendations"]] if result["matched"] else []
+        returned_tags = [tags.get(item_id, set()) for item_id in returned]
         good = set(case["good"])
         position = next((i + 1 for i, item_id in enumerate(returned) if item_id in good), None)
         best_right, best_wrong = best_scores(ranker, case)
@@ -74,6 +80,9 @@ def evaluate(ranker, cases, top_k):
             "low_confidence": result["lowConfidence"],
             "best_right": best_right,
             "best_wrong": best_wrong,
+            # Advice written for this disaster, and advice written only for a different one.
+            "has_scenario_advice": any(case["scenario"] in t for t in returned_tags),
+            "has_other_scenario_advice": any(t and case["scenario"] not in t for t in returned_tags),
         })
     return rows
 
@@ -108,6 +117,21 @@ def report(method, rows, top_k, show_misses):
         n = len(group)
         print(f"    {resource:<18} top-1 {percent(sum(r['top1'] for r in group), n):>6}"
               f"   hit@{top_k} {percent(sum(r['hit'] for r in group), n):>6}   ({n} cases)")
+    print("\n  By scenario:")
+    by_scenario = defaultdict(list)
+    for r in rows:
+        by_scenario[r["case"]["scenario"]].append(r)
+    for scenario, group in sorted(by_scenario.items()):
+        n = len(group)
+        print(f"    {scenario:<18} top-1 {percent(sum(r['top1'] for r in group), n):>6}"
+              f"   hit@{top_k} {percent(sum(r['hit'] for r in group), n):>6}   ({n} cases)")
+
+    # Not every case has scenario advice in the catalog (pets, infants, medication),
+    # so these won't reach 100%. What matters is how they move when the ranker changes.
+    with_scenario = sum(r["has_scenario_advice"] for r in rows)
+    with_other = sum(r["has_other_scenario_advice"] for r in rows)
+    print(f"\n  Scenario advice in top {top_k}:        {percent(with_scenario, total)}  ({with_scenario}/{total})")
+    print(f"  Wrong-scenario advice in top {top_k}:  {percent(with_other, total)}  ({with_other}/{total})")
 
     # These numbers are for picking thresholds: right answers should score above
     # low_confidence, and wrong ones below it.
@@ -141,6 +165,8 @@ def main():
     parser.add_argument("--method", choices=["semantic", "tfidf", "both"], default="both")
     parser.add_argument("--top-k", type=int, default=3)
     parser.add_argument("--show-misses", action="store_true")
+    parser.add_argument("--ignore-scenario", action="store_true",
+                        help="don't pass each case's scenario to the ranker (for comparison)")
     args = parser.parse_args()
 
     catalog = load_catalog()
@@ -152,7 +178,9 @@ def main():
         if ranker.method != method:
             print(f"\nSkipping {method}: the model did not load (got {ranker.method}).")
             continue
-        report(method, evaluate(ranker, cases, args.top_k), args.top_k, args.show_misses)
+        
+        rows = evaluate(ranker, cases, args.top_k, use_scenario=not args.ignore_scenario)
+        report(method, rows, args.top_k, args.show_misses)
 
 
 if __name__ == "__main__":

@@ -1,83 +1,270 @@
 [
   {
     "resource": "drinking_water",
+    "scenario": "tornado",
     "description": "Household of 4 has 2 of 6 gallons of drinking water needed for a 3-day tornado.",
-    "good": ["water-store-supply"]
+    "good": ["water-store-supply", "tornado-water-safe-room"]
   },
   {
     "resource": "drinking_water",
+    "scenario": "powerOutage",
     "description": "Household of 2 has 0 of 14 gallons of drinking water needed for a 14-day long-term power outage.",
     "good": ["water-store-supply", "outage-water-pump"]
   },
   {
     "resource": "sanitation_water",
+    "scenario": "powerOutage",
     "description": "Household of 4 has 0 of 28 gallons of sanitation water needed for a 14-day long-term power outage.",
     "good": ["water-sanitation-reserve", "sanitation-waste", "sanitation-hygiene-kit"]
   },
   {
     "resource": "sanitation_water",
+    "scenario": "flood",
     "description": "Household of 3 has 1 of 4.5 gallons of sanitation water needed for a 3-day flood.",
     "good": ["water-sanitation-reserve", "sanitation-waste", "sanitation-hygiene-kit"]
   },
   {
     "resource": "food",
+    "scenario": "powerOutage",
     "description": "Household of 4 has 20 of 168 meals of food needed for a 14-day long-term power outage.",
     "good": ["food-shelf-stable", "food-no-cook"]
   },
   {
     "resource": "first_aid",
+    "scenario": "winterStorm",
     "description": "Household of 1 has 0 of 1 pieces of first aid kit needed for a 7-day winter storm.",
-    "good": ["medical-first-aid-kit"]
+    "good": ["medical-first-aid-kit", "winter-medical-frostbite"]
   },
   {
     "resource": "lighting",
+    "scenario": "tornado",
     "description": "Household of 5 has 0 of 1 pieces of flashlight needed for a 3-day tornado.",
-    "good": ["lighting-flashlights"]
+    "good": ["lighting-flashlights", "tornado-lighting-gas-leak"]
   },
   {
     "resource": "radio",
+    "scenario": "flood",
     "description": "Household of 2 has 0 of 1 pieces of emergency radio needed for a 3-day flood.",
-    "good": ["communication-radio"]
+    "good": ["communication-radio", "flood-communication-alerts"]
   },
   {
     "resource": "power",
+    "scenario": "powerOutage",
     "description": "Household of 4 has 0 of 1 pieces of battery pack needed for a 14-day long-term power outage.",
     "good": ["power-battery-pack", "outage-power-charge-early"]
   },
   {
     "resource": "medication",
+    "scenario": "winterStorm",
     "description": "Household of 4 has 3 of 7 days of medication needed for a 7-day winter storm.",
     "good": ["medical-prescriptions"]
   },
   {
     "resource": "shelter",
+    "scenario": "winterStorm",
     "description": "Household of 4 has 0 of 1 pieces of shelter or warmth supplies needed for a 7-day winter storm.",
     "good": ["shelter-warmth"]
   },
   {
     "resource": "shelter",
+    "scenario": "tornado",
     "description": "Household of 3 has 0 of 1 pieces of shelter or warmth supplies needed for a 3-day tornado.",
     "good": ["shelter-safe-room", "shelter-go-bag"]
   },
   {
     "resource": "sanitation",
+    "scenario": "flood",
     "description": "Household of 2 has 0 of 1 pieces of sanitation supplies needed for a 3-day flood.",
-    "good": ["sanitation-hygiene-kit", "sanitation-waste", "sanitation-cleaning"]
+    "good": ["sanitation-hygiene-kit", "sanitation-waste", "sanitation-cleaning", "flood-sanitation-cleanup"]
   },
   {
     "resource": "infant_food",
+    "scenario": "flood",
     "description": "Household of 3 has 0 of 3 days of infant formula or baby food needed for a 3-day flood.",
     "good": ["infant-formula"]
   },
   {
     "resource": "infant_food",
+    "scenario": "powerOutage",
     "description": "Household of 4 has 0 of 14 days of infant formula or baby food needed for a 14-day long-term power outage.",
     "good": ["infant-formula", "infant-outage-feeding"]
   },
   {
     "resource": "pet_food",
+    "scenario": "powerOutage",
     "description": "Household of 2 and 1 pet has 0 of 14 days of pet food needed for a 14-day long-term power outage.",
     "good": ["pet-food-supply"]
-  }
+  },
 
+  {
+    "resource": "drinking_water",
+    "scenario": "tornado",
+    "description": "Household of 3 has 1 of 4.5 gallons of drinking water needed for a 3-day tornado.",
+    "good": ["water-store-supply", "tornado-water-safe-room"]
+  },
+  {
+    "resource": "food",
+    "scenario": "tornado",
+    "description": "Household of 2 has 4 of 18 meals of food needed for a 3-day tornado.",
+    "good": ["food-shelf-stable", "food-no-cook", "tornado-food-safe-room"]
+  },
+  {
+    "resource": "first_aid",
+    "scenario": "tornado",
+    "description": "Household of 4 has 0 of 1 pieces of first aid kit needed for a 3-day tornado.",
+    "good": ["medical-first-aid-kit", "tornado-medical-debris-injuries"]
+  },
+  {
+    "resource": "radio",
+    "scenario": "tornado",
+    "description": "Household of 2 has 0 of 1 pieces of emergency radio needed for a 5-day tornado.",
+    "good": ["communication-radio", "tornado-communication-alerts"]
+  },
+  {
+    "resource": "sanitation",
+    "scenario": "tornado",
+    "description": "Household of 4 has 0 of 1 pieces of sanitation supplies needed for a 3-day tornado.",
+    "good": ["sanitation-hygiene-kit", "sanitation-waste", "tornado-sanitation-cleanup"]
+  },
+  {
+    "resource": "medication",
+    "scenario": "tornado",
+    "description": "Household of 1 has 2 of 10 days of medication needed for a 10-day tornado.",
+    "good": ["medical-prescriptions"]
+  },
+  {
+    "resource": "lighting",
+    "scenario": "tornado",
+    "description": "Household of 3 has 0 of 1 pieces of flashlight needed for a 10-day tornado.",
+    "good": ["lighting-flashlights", "tornado-lighting-gas-leak"]
+  },
+  {
+    "resource": "pet_food",
+    "scenario": "tornado",
+    "description": "Household of 2 and 2 pets has 1 of 3 days of pet food needed for a 3-day tornado.",
+    "good": ["pet-food-supply"]
+  },
+
+  {
+    "resource": "drinking_water",
+    "scenario": "flood",
+    "description": "Household of 4 has 0 of 6 gallons of drinking water needed for a 3-day flood.",
+    "good": ["water-store-supply", "water-purify", "flood-water-unsafe-tap"]
+  },
+  {
+    "resource": "drinking_water",
+    "scenario": "flood",
+    "description": "Household of 2 has 5 of 21 gallons of drinking water needed for a 21-day flood.",
+    "good": ["water-store-supply", "water-purify", "flood-water-unsafe-tap", "outage-water-boil"]
+  },
+  {
+    "resource": "food",
+    "scenario": "flood",
+    "description": "Household of 5 has 10 of 45 meals of food needed for a 3-day flood.",
+    "good": ["food-shelf-stable", "flood-food-discard"]
+  },
+  {
+    "resource": "first_aid",
+    "scenario": "flood",
+    "description": "Household of 2 has 0 of 1 pieces of first aid kit needed for a 3-day flood.",
+    "good": ["medical-first-aid-kit", "flood-medical-waterproof"]
+  },
+  {
+    "resource": "medication",
+    "scenario": "flood",
+    "description": "Household of 3 has 1 of 7 days of medication needed for a 7-day flood.",
+    "good": ["medical-prescriptions", "flood-medical-waterproof"]
+  },
+  {
+    "resource": "shelter",
+    "scenario": "flood",
+    "description": "Household of 4 has 0 of 1 pieces of shelter or warmth supplies needed for a 3-day flood.",
+    "good": ["flood-shelter-high-ground", "shelter-go-bag"]
+  },
+  {
+    "resource": "lighting",
+    "scenario": "flood",
+    "description": "Household of 1 has 0 of 1 pieces of flashlight needed for a 3-day flood.",
+    "good": ["lighting-flashlights", "flood-lighting-electrical"]
+  },
+  {
+    "resource": "sanitation_water",
+    "scenario": "flood",
+    "description": "Household of 4 has 2 of 20 gallons of sanitation water needed for a 10-day flood.",
+    "good": ["water-sanitation-reserve", "sanitation-waste", "sanitation-hygiene-kit"]
+  },
+  {
+    "resource": "infant_food",
+    "scenario": "flood",
+    "description": "Household of 3 has 1 of 5 days of infant formula or baby food needed for a 5-day flood.",
+    "good": ["infant-formula"]
+  },
+
+  {
+    "resource": "drinking_water",
+    "scenario": "winterStorm",
+    "description": "Household of 4 has 4 of 14 gallons of drinking water needed for a 7-day winter storm.",
+    "good": ["water-store-supply", "winter-water-frozen-pipes"]
+  },
+  {
+    "resource": "food",
+    "scenario": "winterStorm",
+    "description": "Household of 3 has 12 of 63 meals of food needed for a 7-day winter storm.",
+    "good": ["food-shelf-stable", "food-no-cook", "winter-food-body-heat"]
+  },
+  {
+    "resource": "first_aid",
+    "scenario": "winterStorm",
+    "description": "Household of 2 has 0 of 1 pieces of first aid kit needed for a 12-day winter storm.",
+    "good": ["medical-first-aid-kit", "winter-medical-frostbite"]
+  },
+  {
+    "resource": "shelter",
+    "scenario": "winterStorm",
+    "description": "Household of 2 has 0 of 1 pieces of shelter or warmth supplies needed for a 12-day winter storm.",
+    "good": ["shelter-warmth", "outage-shelter-cold", "winter-shelter-space-heaters"]
+  },
+  {
+    "resource": "radio",
+    "scenario": "winterStorm",
+    "description": "Household of 4 has 0 of 1 pieces of emergency radio needed for a 7-day winter storm.",
+    "good": ["communication-radio", "winter-communication-check-in"]
+  },
+  {
+    "resource": "lighting",
+    "scenario": "winterStorm",
+    "description": "Household of 2 has 0 of 1 pieces of flashlight needed for a 7-day winter storm.",
+    "good": ["lighting-flashlights", "winter-lighting-long-nights"]
+  },
+  {
+    "resource": "pet_food",
+    "scenario": "winterStorm",
+    "description": "Household of 1 and 1 pet has 0 of 7 days of pet food needed for a 7-day winter storm.",
+    "good": ["pet-food-supply"]
+  },
+  {
+    "resource": "sanitation",
+    "scenario": "winterStorm",
+    "description": "Household of 3 has 0 of 1 pieces of sanitation supplies needed for a 7-day winter storm.",
+    "good": ["sanitation-hygiene-kit", "sanitation-waste"]
+  },
+
+  {
+    "resource": "lighting",
+    "scenario": "powerOutage",
+    "description": "Household of 4 has 0 of 1 pieces of flashlight needed for a 30-day long-term power outage.",
+    "good": ["lighting-flashlights", "outage-lighting-rechargeable"]
+  },
+  {
+    "resource": "shelter",
+    "scenario": "powerOutage",
+    "description": "Household of 2 has 0 of 1 pieces of shelter or warmth supplies needed for a 14-day long-term power outage.",
+    "good": ["shelter-warmth", "outage-shelter-cold", "outage-shelter-heat"]
+  },
+  {
+    "resource": "medication",
+    "scenario": "powerOutage",
+    "description": "Household of 2 has 3 of 14 days of medication needed for a 14-day long-term power outage.",
+    "good": ["medical-prescriptions", "outage-medical-refrigerated"]
+  }
 ]
