@@ -7,6 +7,7 @@ spec:
   template:
     metadata: { labels: { app: ai } }
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: ai
           image: ai:latest
@@ -33,6 +34,7 @@ spec:
   template:
     metadata: { labels: { app: backend } }
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: backend
           image: backend:latest
@@ -64,6 +66,7 @@ spec:
   template:
     metadata: { labels: { app: frontend } }
     spec:
+      automountServiceAccountToken: false
       containers:
         - name: frontend
           image: frontend:latest
