@@ -4,6 +4,7 @@ import Navbar from './components/Navbar.jsx'
 import { GuestRoute, ProtectedRoute } from './components/RouteGuards.jsx'
 import { AuthProvider } from './context/AuthContext.jsx'
 import HomePage from './pages/HomePage.jsx'
+import OverviewPage from './pages/Overview.jsx'
 import AuthPage from './pages/AuthPage.jsx'
 import NotFoundPage from './pages/NotFoundPage.jsx'
 import InventoryPage from './pages/Inventory.jsx'
@@ -43,6 +44,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <InventoryPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/overview"
+            element={
+              <ProtectedRoute>
+                <OverviewPage />
               </ProtectedRoute>
             }
           />

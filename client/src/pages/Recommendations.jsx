@@ -54,7 +54,7 @@ export default function RecommendationsPage() {
         const results = simulationResponse.data.results
         const items = inventoryResponse.data.items
 
-        setSimulations(results)
+        setSimulations(results.slice(0, 7)) // Show only the 7 most recent simulations
         setInventoryItems(items)
         setSelectedSimulationId(results[0]?.id ?? '')
       } catch {
