@@ -7,6 +7,7 @@ const CATEGORIES = [...new Set(Object.values(RESOURCE_TYPES).map((type) => type.
 const inventoryItemSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    clientId: { type: String, trim: true, maxlength: 100 },
     name: { type: String, required: true, trim: true, maxlength: 100 },
     // What the gap engine counts. The user picks it from a dropdown.
     resourceType: { type: String, required: true, enum: Object.keys(RESOURCE_TYPES) },
@@ -37,6 +38,10 @@ const inventoryItemSchema = new mongoose.Schema(
 
 // The gap engine and inventory list both look items up by user.
 inventoryItemSchema.index({ userId: 1, resourceType: 1 });
+inventoryItemSchema.index(
+  { userId: 1, clientId: 1 },
+  { unique: true, partialFilterExpression: { clientId: { $type: 'string' } } }
+);
 
 const InventoryItem = mongoose.model('InventoryItem', inventoryItemSchema);
 InventoryItem.CATEGORIES = CATEGORIES;

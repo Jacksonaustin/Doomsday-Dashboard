@@ -1,18 +1,23 @@
 
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import OfflineStatus from '../components/OfflineStatus.jsx'
+import useAuth from '../context/useAuth.js'
 import {
   getSimulations,
   getSimulationScenarios,
   getRecommendations,
   getInventoryItems,
-  getChecklistItems,
-  addChecklistItem as saveChecklistItem,
-  updateChecklistItem as saveChecklistItemChanges,
-  deleteChecklistItem as removeSavedChecklistItem
 } from '../services/api.js'
+import {
+  createLocalItem,
+  deleteLocalItem,
+  loadOfflineCollection,
+  updateLocalItem,
+} from '../services/offlineData.js'
 
 export default function RecommendationsPage() {
+  const { user } = useAuth()
   // Saved simulations and inventory
   const [simulations, setSimulations] = useState([])
   const [inventoryItems, setInventoryItems] = useState(null)
@@ -32,6 +37,7 @@ export default function RecommendationsPage() {
   const [checklistItems, setChecklistItems] = useState([])
   const [checklistLoading, setChecklistLoading] = useState(true)
   const [checklistError, setChecklistError] = useState('')
+  const [checklistOfflineMessage, setChecklistOfflineMessage] = useState('')
   const [checklistActionError, setChecklistActionError] = useState('')
   const [pendingRecommendationId, setPendingRecommendationId] = useState('')
   const [pendingChecklistId, setPendingChecklistId] = useState('')
@@ -98,10 +104,11 @@ export default function RecommendationsPage() {
   useEffect(() => {
     let active = true
 
-    getChecklistItems()
-      .then((response) => {
+    const loadChecklist = () => loadOfflineCollection(user.id, 'checklist')
+      .then((result) => {
         if (active) {
-          setChecklistItems(response.data.items)
+          setChecklistItems(result.items)
+          setChecklistOfflineMessage(result.error)
           setChecklistError('')
         }
       })
@@ -116,10 +123,16 @@ export default function RecommendationsPage() {
         }
       })
 
+    const handleOnline = () => loadChecklist()
+
+    loadChecklist()
+    window.addEventListener('online', handleOnline)
+
     return () => {
       active = false
+      window.removeEventListener('online', handleOnline)
     }
-  }, [])
+  }, [user.id])
 
   // Load recommendations for the selected simulation
   useEffect(() => {
@@ -162,7 +175,7 @@ export default function RecommendationsPage() {
     setChecklistActionError('')
 
     try {
-      const response = await saveChecklistItem({
+      const savedItem = await createLocalItem(user.id, 'checklist', {
         recommendationId: recommendation.id,
         title: recommendation.title,
         description: recommendation.explanation,
@@ -170,7 +183,6 @@ export default function RecommendationsPage() {
         resource: group.resource,
         simulationId: selectedSimulationId
       })
-      const savedItem = response.data.item
       setChecklistItems((current) => (
         current.some((item) => item.id === savedItem.id)
           ? current
@@ -197,7 +209,9 @@ export default function RecommendationsPage() {
     setChecklistActionError('')
 
     try {
-      await removeSavedChecklistItem(id)
+      const item = checklistItems.find((entry) => entry.id === id)
+      if (!item) return
+      await deleteLocalItem(user.id, 'checklist', item)
       setChecklistItems((current) => current.filter((item) => item.id !== id))
     } catch (requestError) {
       setChecklistActionError(
@@ -213,10 +227,12 @@ export default function RecommendationsPage() {
     setChecklistActionError('')
 
     try {
-      const response = await saveChecklistItemChanges(item.id, {
-        completed: !item.completed
-      })
-      const updatedItem = response.data.item
+      const updatedItem = await updateLocalItem(
+        user.id,
+        'checklist',
+        item,
+        { ...item, completed: !item.completed }
+      )
       setChecklistItems((current) => current.map((currentItem) => (
         currentItem.id === updatedItem.id ? updatedItem : currentItem
       )))
@@ -536,6 +552,8 @@ export default function RecommendationsPage() {
                 {checklistItems.length} items
               </span>
             </div>
+
+            <OfflineStatus message={checklistOfflineMessage} />
 
             {checklistActionError && (
               <p className="mt-4 text-sm text-red-400" role="alert">

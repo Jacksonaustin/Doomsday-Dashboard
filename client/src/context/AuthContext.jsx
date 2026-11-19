@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getCurrentUser, logoutUser } from '../services/api.js'
+import {
+  clearCachedSession,
+  getCachedUser,
+  saveCachedUser,
+  startOfflineSync
+} from '../services/offlineData.js'
 import AuthContext from './authContext.js'
 
 export function AuthProvider({ children }) {
@@ -8,6 +14,11 @@ export function AuthProvider({ children }) {
     status: 'loading',
     error: '',
   })
+  const [offlineSync, setOfflineSync] = useState({
+    online: navigator.onLine,
+    pending: 0,
+    error: ''
+  })
 
   useEffect(() => {
     let active = true
@@ -15,15 +26,28 @@ export function AuthProvider({ children }) {
     getCurrentUser()
       .then((result) => {
         if (active) {
+          saveCachedUser(result.user).catch((error) => {
+            console.error('Unable to cache the authenticated user for offline use', error)
+          })
           setSession({ user: result.user, status: 'authenticated', error: '' })
         }
       })
-      .catch((requestError) => {
+      .catch(async (requestError) => {
         if (!active) return
 
         if (requestError.response?.status === 401) {
           setSession({ user: null, status: 'unauthenticated', error: '' })
           return
+        }
+
+        try {
+          const cachedUser = await getCachedUser()
+          if (active && cachedUser) {
+            setSession({ user: cachedUser, status: 'authenticated-offline', error: '' })
+            return
+          }
+        } catch (cacheError) {
+          console.error('Unable to load the cached user for offline use', cacheError)
         }
 
         setSession({
@@ -38,13 +62,27 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
+  useEffect(() => {
+    if (!session.user) return undefined
+
+    return startOfflineSync(session.user.id, setOfflineSync)
+  }, [session.user])
+
   const authenticate = useCallback((authenticatedUser) => {
+    saveCachedUser(authenticatedUser).catch((error) => {
+      console.error('Unable to cache the authenticated user for offline use', error)
+    })
     setSession({ user: authenticatedUser, status: 'authenticated', error: '' })
   }, [])
 
   const logout = useCallback(async () => {
-    await logoutUser()
-    setSession({ user: null, status: 'unauthenticated', error: '' })
+    try {
+      await logoutUser()
+    } finally {
+      await clearCachedSession()
+      setOfflineSync({ online: navigator.onLine, pending: 0, error: '' })
+      setSession({ user: null, status: 'unauthenticated', error: '' })
+    }
   }, [])
 
   const refreshSession = useCallback(async () => {
@@ -59,6 +97,16 @@ export function AuthProvider({ children }) {
         return
       }
 
+      try {
+        const cachedUser = await getCachedUser()
+        if (cachedUser) {
+          setSession({ user: cachedUser, status: 'authenticated-offline', error: '' })
+          return
+        }
+      } catch (cacheError) {
+        console.error('Unable to load the cached user for offline use', cacheError)
+      }
+
       setSession({
         user: null,
         status: 'error',
@@ -69,7 +117,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ ...session, authenticate, logout, refreshSession }}
+      value={{ ...session, authenticate, logout, refreshSession, offlineSync }}
     >
       {children}
     </AuthContext.Provider>
