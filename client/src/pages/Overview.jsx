@@ -162,25 +162,47 @@ const chartData = Object.entries(categoryCounts)
         }))
     : []
 
-  const summaryCards = [
-    { label: 'Inventory Entries', value: items.length },
-    {
-      label: 'Selected Score',
-      value: Number.isFinite(selectedSimulation?.preparednessScore)
-        ? `${selectedSimulation.preparednessScore}/100`
-        : '—',
-    },
-    {
-      label: 'Food Coverage',
-      value: displayDays(selectedFoodDays),
-      detail: `${totalMeals} meals in current inventory`,
-    },
-    {
-      label: 'Drinking Water',
-      value: displayDays(selectedWaterDays),
-      detail: `${Number(totalWaterGallons.toFixed(2))} gal of water stored`,
-    },
-  ]
+const inventoryCards = [
+  { label: 'Inventory Entries', value: items.length },
+  { label: 'Meals Stored', value: totalMeals },
+  {
+    label: 'Water Stored',
+    value: `${Number(totalWaterGallons.toFixed(2))} gal`,
+  },
+]
+
+const simulationCards = [
+  {
+    label: 'Preparedness Score',
+    value: Number.isFinite(selectedSimulation?.preparednessScore)
+      ? `${selectedSimulation.preparednessScore}/100`
+      : '—',
+  },
+  {
+    label: 'Food Coverage',
+    value: displayDays(selectedFoodDays),
+  },
+  {
+    label: 'Drinking Water Coverage',
+    value: displayDays(selectedWaterDays),
+  },
+]
+
+// Temporarily keep the existing card display working.
+const summaryGroups = [
+  {
+    title: 'Current Inventory',
+    description: 'Supplies you currently have stored.',
+    cards: inventoryCards,
+  },
+  {
+    title: 'Selected Simulation Results',
+    description: selectedSimulation
+      ? `${formatScenario(selectedSimulation.scenario)} · ${formatDate(selectedSimulation.createdAt)} — saved simulation estimates`
+      : 'Run a simulation to see your preparedness estimates.',
+    cards: simulationCards,
+  },
+]
 
   return (
     <main className="min-w-0 min-h-screen bg-[#101713] text-[#eaf2ea]">
@@ -195,25 +217,35 @@ const chartData = Object.entries(categoryCounts)
 
         {!loading && !error && (
           <div className="mt-6 space-y-4 sm:mt-8 sm:space-y-6">
-            {/* Summary cards: 1 column on small phones, 2 on larger phones, 4 on desktop. */}
-            <section className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-4 lg:gap-4">
-              {summaryCards.map((stat) => (
-                <div
-                  key={stat.label}
-                  className="min-w-0 rounded-xl border border-[#354839] bg-[#19241c] p-4 sm:p-5"
-                >
-                  <p className="text-sm text-[#b5c6b7]">{stat.label}</p>
-                  <p className="mt-2 break-words text-xl font-bold sm:text-2xl">
-                    {stat.value}
-                  </p>
-                  {stat.detail && (
-                    <p className="mt-2 break-words text-xs text-[#91bb7e]">
-                      {stat.detail}
-                    </p>
-                  )}
+            {/* Current inventory and simulation results */}
+            {summaryGroups.map((group) => (
+              <section key={group.title}>
+                <h2 className="text-lg font-semibold sm:text-xl">
+                  {group.title}
+                </h2>
+
+                <p className="mt-1 text-sm text-[#b5c6b7]">
+                  {group.description}
+                </p>
+
+                <div className="mt-3 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-3 lg:gap-4">
+                  {group.cards.map((stat) => (
+                    <div
+                      key={stat.label}
+                      className="min-w-0 rounded-xl border border-[#354839] bg-[#19241c] p-4 sm:p-5"
+                    >
+                      <p className="text-sm text-[#b5c6b7]">
+                        {stat.label}
+                      </p>
+
+                      <p className="mt-2 break-words text-xl font-bold sm:text-2xl">
+                        {stat.value}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </section>
+              </section>
+            ))}
 
             {/* Stack charts on phones; show the forecast first and the doughnut second on desktop. */}
             <div
@@ -226,10 +258,12 @@ const chartData = Object.entries(categoryCounts)
               {/* Inventory breakdown */}
               <section className="min-w-0 rounded-xl border border-[#354839] bg-[#19241c] p-4 sm:p-6 lg:order-2">
                 <h2 className="text-lg font-semibold sm:text-xl">
-                  Inventory Breakdown
+                  Current Inventory Breakdown
                 </h2>
+
                 <p className="mt-1 text-sm text-[#b5c6b7]">
-                  Number of inventory entries in each category.
+                  Your currently stored inventory, grouped by category.
+                  This chart does not use saved simulation results.
                 </p>
 
                 {items.length === 0 ? (
@@ -301,7 +335,7 @@ const chartData = Object.entries(categoryCounts)
                     Supply Depletion Forecast
                   </h2>
                   <p className="mt-1 text-sm text-[#b5c6b7]">
-                    Estimated supplies remaining throughout a disaster.
+                    Projected food and water remaining based on the selected saved simulation.
                   </p>
 
                   {hasCoverage ? (
@@ -329,7 +363,7 @@ const chartData = Object.entries(categoryCounts)
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart
                             data={depletionData}
-                            margin={{ top: 8, right: 8, left: -14, bottom: 4 }}
+                            margin={{ top: 8, right: 8, left: 0, bottom: 4 }}
                           >
                             <CartesianGrid stroke="#354839" strokeDasharray="3 3" />
                             <XAxis
