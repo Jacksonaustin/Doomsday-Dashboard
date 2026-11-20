@@ -22,8 +22,6 @@ services:
 
   ai:
     build: ./ml-recommend
-    volumes:
-      - ai-model-cache:/home/appuser/.cache/huggingface
     restart: unless-stopped
 
 volumes:
