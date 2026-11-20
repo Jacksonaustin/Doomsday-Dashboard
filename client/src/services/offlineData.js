@@ -139,8 +139,24 @@ function publicRecord(record) {
   return {
     ...record.data,
     id: record.id,
-    syncPending: record.syncState === 'pending'
+    syncPending: record.syncState === 'pending',
+    syncFailed: record.syncState === 'failed',
+    syncError: record.syncState === 'failed' ? record.syncError || '' : ''
   }
+}
+
+// A 4xx the server will give again on every retry (validation error, item gone).
+// 401/403 are session problems and 408/429 are temporary, so those are retried.
+function isPermanentFailure(error) {
+  const status = error.response?.status
+  return status >= 400 && status < 500 && ![401, 403, 408, 429].includes(status)
+}
+
+// Shaped like an axios error so the pages' existing error handling shows the message.
+function toRequestError(record) {
+  const error = new Error(record.syncError)
+  error.response = { status: record.syncStatus, data: { message: record.syncError } }
+  return error
 }
 
 async function getOwnerRecords(ownerId, collection) {
@@ -178,16 +194,45 @@ async function getPendingRecords(ownerId) {
   return records.sort((a, b) => a.updatedAt - b.updatedAt)
 }
 
-async function getPendingCount(ownerId) {
-  return (await getPendingRecords(ownerId)).length
+async function getSyncSummary(ownerId) {
+  const records = await transact(RECORDS_STORE, 'readonly', async (store) => {
+    const allRecords = await requestResult(store.getAll())
+    return allRecords.filter((record) => record.ownerId === ownerId)
+  })
+
+  return {
+    pending: records.filter((record) => record.syncState === 'pending').length,
+    failedItems: records
+      .filter((record) => record.syncState === 'failed')
+      .map((record) => ({
+        name: record.data.name || record.data.title || 'An item',
+        message: record.syncError || 'The server rejected this change.'
+      }))
+  }
 }
 
+async function markFailed(record, syncError) {
+  const latest = await getRecord(record.ownerId, record.collection, record.id)
+  // Edited again while the request was in flight: leave it pending so the newer
+  // version is tried instead.
+  if (!latest || latest.updatedAt !== record.updatedAt) return
+
+  await putRecord({
+    ...latest,
+    syncState: 'failed',
+    syncStatus: syncError.response?.status,
+    syncError: syncError.response?.data?.message || 'The server rejected this change.'
+  })
+} 
 async function reconcileRemote(ownerId, collection, remoteItems) {
   const cached = await getOwnerRecords(ownerId, collection)
   const byRemoteId = new Map()
   const byNaturalId = new Map()
   for (const record of cached) {
+    
     if (record.remoteId) byRemoteId.set(record.remoteId, record)
+
+      
 
     const naturalId = collection === 'inventory'
       ? record.clientId
@@ -213,8 +258,10 @@ async function reconcileRemote(ownerId, collection, remoteItems) {
         : item.recommendationId
       const existing = byRemoteId.get(item.id) ||
         (naturalId ? byNaturalId.get(naturalId) : null)
-      if (existing?.syncState === 'pending' || existing?.deleted) continue
 
+      // Local pending or rejected changes win until the user resolves them.
+      if (existing && existing.syncState !== 'synced') continue
+      
       const id = existing?.id || item.id
       store.put({
         key: recordKey(ownerId, collection, id),
@@ -282,7 +329,13 @@ async function syncRecord(initialRecord) {
   const methods = getApiMethods(record.collection)
   if (record.deleted) {
     if (record.remoteId) {
-      await methods.remove(record.remoteId)
+      try{
+        await methods.remove(record.remoteId)
+      } catch (error) {
+        if(error.response?.status !== 404) {
+          throw error
+        }
+      }
     }
     await removeRecord(record.key)
     return
@@ -328,34 +381,48 @@ export async function syncPendingChanges(ownerId) {
 
   const syncPromise = (async () => {
     let error = ''
+    let authExpired = false
     if (navigator.onLine) {
       try {
         for (let round = 0; round < 10; round += 1) {
           const records = await getPendingRecords(ownerId)
           if (records.length === 0) break
 
-          let failed = false
+          let stopped = false
           for (const record of records) {
             try {
               await syncRecord(record)
             } catch (syncError) {
-              error = syncError.response?.data?.message || 'Some changes could not be synced yet.'
-              failed = true
+              if (isPermanentFailure(syncError)) {
+                // Retrying will never work. Set it aside so it doesn't block
+                // every change queued after it.
+                await markFailed(record, syncError)
+                continue
+              }
+
+              // Network down, server error or expired session: stop and retry later.
+              authExpired = syncError.response?.status === 401
+              error = authExpired
+                ? 'Your session expired. Sign in again to sync your changes.'
+                : syncError.response?.data?.message || 'Some changes could not be synced yet.'
+              stopped = true
               break
             }
           }
-          if (failed) break
+          if (stopped) break
         }
       } catch {
         error = 'Unable to access locally saved changes.'
       }
     }
 
-    const pending = await getPendingCount(ownerId).catch(() => 0)
+    const summary = await getSyncSummary(ownerId)
+      .catch(() => ({ pending: 0, failedItems: [] }))
     const status = {
       online: navigator.onLine,
-      pending,
-      error
+      ...summary,
+      error,
+      authExpired
     }
     emitSyncStatus(ownerId, status)
     return status
@@ -396,6 +463,16 @@ async function saveLocalItem(ownerId, collection, data, existingItem = null) {
   emitDataChange(ownerId)
   await syncPendingChanges(ownerId)
   const latest = await getRecord(ownerId, collection, id)
+
+  if (latest?.syncState === 'failed' && latest.updatedAt === record.updatedAt) {
+    // Online and the server rejected it straight away (usually validation).
+    // Undo it and throw so the form shows the message like it used to.
+    if (oldRecord) await putRecord(oldRecord)
+    else await removeRecord(record.key)
+    emitDataChange(ownerId)
+    throw toRequestError(latest)
+  }
+
   return latest ? publicRecord(latest) : publicRecord(record)
 }
 
@@ -443,6 +520,26 @@ export async function clearCachedSession() {
   await transact(SESSION_STORE, 'readwrite', (store) => requestResult(store.delete('currentUserId')))
 }
 
+// Set when sign-out couldn't reach the server, so the session cookie is still valid.
+export async function markLogoutPending() {
+  await transact(SESSION_STORE, 'readwrite', (store) => (
+    requestResult(store.put({ key: 'pendingLogout' }))
+  ))
+}
+
+export async function isLogoutPending() {
+  const entry = await transact(SESSION_STORE, 'readonly', (store) => (
+    requestResult(store.get('pendingLogout'))
+  ))
+  return Boolean(entry)
+}
+
+export async function clearLogoutPending() {
+  await transact(SESSION_STORE, 'readwrite', (store) => (
+    requestResult(store.delete('pendingLogout'))
+  ))
+}
+
 export function startOfflineSync(ownerId, onStatus) {
   let active = true
   const sync = async () => {
@@ -451,9 +548,11 @@ export function startOfflineSync(ownerId, onStatus) {
   }
   const updateOnlineStatus = () => {
     if (!navigator.onLine) {
-      getPendingCount(ownerId).then((pending) => {
-        if (active) onStatus({ online: false, pending, error: '' })
-      })
+      getSyncSummary(ownerId)
+        .then((summary) => {
+          if (active) onStatus({ online: false, ...summary, error: '', authExpired: false })
+        })
+        .catch(() => {})
     } else {
       sync()
     }
