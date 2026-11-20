@@ -63,7 +63,9 @@ before(async () => {
   });
   InventoryItem.findOne = (query) => {
     const item = inventory.find((entry) =>
-      entry.userId === query.userId && entry._id === String(query._id)
+      entry.userId === query.userId &&
+      (query._id === undefined || entry._id === String(query._id)) &&
+      (query.clientId === undefined || entry.clientId === query.clientId)
     );
     return {
       lean: async () => item || null,
@@ -71,6 +73,14 @@ before(async () => {
     };
   };
   InventoryItem.create = async (attributes) => {
+    if (attributes.clientId && inventory.some((entry) =>
+      entry.userId === attributes.userId && entry.clientId === attributes.clientId
+    )) {
+      const error = new Error('Duplicate client ID');
+      error.code = 11000;
+      throw error;
+    }
+
     const item = itemFor(attributes.userId, attributes);
     inventory.push(item);
     return item;
@@ -131,6 +141,23 @@ test('users can list and create only their own inventory items', async () => {
 
   const refreshed = await (await request('/api/inventory')).json();
   assert.equal(refreshed.data.items.length, 1);
+});
+
+test('inventory creates are idempotent when retried with the same client ID', async () => {
+  const payload = {
+    name: 'Water',
+    quantity: 3,
+    resourceType: 'water',
+    unit: 'gallons',
+    clientId: 'offline-create-1'
+  };
+  const first = await request('/api/inventory', { method: 'POST', body: payload });
+  const retry = await request('/api/inventory', { method: 'POST', body: payload });
+
+  assert.equal(first.status, 201);
+  assert.equal(retry.status, 201);
+  assert.equal((await first.json()).data.item.id, (await retry.json()).data.item.id);
+  assert.equal(inventory.length, 1);
 });
 
 test('inventory input validates category-specific resource units', async () => {

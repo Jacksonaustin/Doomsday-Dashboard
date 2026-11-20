@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import OfflineStatus from '../components/OfflineStatus.jsx'
 import useAuth from '../context/useAuth.js'
 import {
-  createInventoryItem,
-  deleteInventoryItem,
-  getInventoryItems,
-  updateInventoryItem,
-} from '../services/api.js'
+  createLocalItem,
+  deleteLocalItem,
+  loadOfflineCollection,
+  updateLocalItem,
+} from '../services/offlineData.js'
 
 const CATEGORIES = [
   { label: 'All Supplies', value: 'all' },
@@ -77,11 +78,12 @@ function getErrorMessage(error) {
 }
 
 export default function InventoryPage() {
-  const { refreshSession } = useAuth()
+  const { refreshSession, user } = useAuth()
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [items, setItems] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
+  const [offlineMessage, setOfflineMessage] = useState('')
   const [notice, setNotice] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
@@ -100,16 +102,17 @@ export default function InventoryPage() {
     resources.find((resource) => resource.value === form.resourceType) || resources[0]
 
   const fetchItems = useCallback(async () => {
-    const result = await getInventoryItems()
-    return result.data.items
-  }, [])
+    return loadOfflineCollection(user.id, 'inventory')
+  }, [user.id])
 
   const loadItems = useCallback(async () => {
     setIsLoading(true)
     setLoadError('')
 
     try {
-      setItems(await fetchItems())
+      const result = await fetchItems()
+      setItems(result.items)
+      setOfflineMessage(result.error)
     } catch (error) {
       if (error.response?.status === 401) {
         await refreshSession()
@@ -124,11 +127,25 @@ export default function InventoryPage() {
   useEffect(() => {
     let active = true
 
+    const applyLoadedItems = (result) => {
+      if (active) {
+        setItems(result.items)
+        setOfflineMessage(result.error)
+        setLoadError('')
+      }
+    }
+
+    const handleOnline = () => {
+      fetchItems()
+        .then(applyLoadedItems)
+        .catch((error) => {
+          if (active) setLoadError(getErrorMessage(error))
+        })
+    }
+
     fetchItems()
-      .then((loadedItems) => {
-        if (active) {
-          setItems(loadedItems)
-        }
+      .then((result) => {
+        applyLoadedItems(result)
       })
       .catch((error) => {
         if (!active) return
@@ -144,9 +161,11 @@ export default function InventoryPage() {
           setIsLoading(false)
         }
       })
+    window.addEventListener('online', handleOnline)
 
     return () => {
       active = false
+      window.removeEventListener('online', handleOnline)
     }
   }, [fetchItems, refreshSession])
 
@@ -280,10 +299,9 @@ export default function InventoryPage() {
       ...(form.resourceType === 'drink' ? { shelfStable: form.shelfStable } : {}),
     }
 
-try {
+    try {
   if (editingItem) {
-    const result = await updateInventoryItem(editingItem.id, itemData)
-    const savedItem = result.data.item
+    const savedItem = await updateLocalItem(user.id, 'inventory', editingItem, itemData)
 
     setItems((current) =>
       current.map((item) =>
@@ -299,11 +317,11 @@ try {
     ]
 
     const results = await Promise.allSettled(
-      itemsToSave.map((item) => createInventoryItem(item))
+      itemsToSave.map((item) => createLocalItem(user.id, 'inventory', item))
     )
 
     const savedItems = results.flatMap((result) =>
-      result.status === 'fulfilled' ? [result.value.data.item] : []
+      result.status === 'fulfilled' ? [result.value] : []
     )
 
     const failedItems = itemsToSave.filter(
@@ -319,13 +337,6 @@ try {
         `${savedItems.length} saved, ${failedItems.length} failed. Try saving the remaining items again.`
       )
 
-      if (results.some(
-        (result) => result.status === 'rejected' &&
-          result.reason?.response?.status === 401
-      )) {
-        await refreshSession()
-      }
-
       return
     }
 
@@ -335,12 +346,8 @@ try {
 
   setIsModalOpen(false)
   setEditingItem(null)
-}catch (error) {
-      if (error.response?.status === 401) {
-        await refreshSession()
-      } else {
-        setFormError(getErrorMessage(error))
-      }
+    } catch (error) {
+      setFormError(getErrorMessage(error))
     } finally {
       setIsSaving(false)
     }
@@ -354,7 +361,7 @@ try {
     setLoadError('')
 
     try {
-      await deleteInventoryItem(item.id)
+      await deleteLocalItem(user.id, 'inventory', item)
       setItems((current) => current.filter((entry) => entry.id !== item.id))
       setNotice(`${item.name} was deleted.`)
     } catch (error) {
@@ -371,6 +378,7 @@ try {
   return (
     <main className="min-h-screen bg-[#101713] text-[#eaf2ea]">
       <div className="mx-auto max-w-6xl px-6 py-10">
+        <OfflineStatus message={offlineMessage} />
 
     <div className="flex flex-wrap items-center justify-between gap-4">
       <h1 className="text-3xl font-bold">

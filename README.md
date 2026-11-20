@@ -184,5 +184,11 @@ unit; items are scoped to their owner and use the same resource types as disaste
 simulations. Checklist items are persisted per user with `GET /api/checklist`
 and `POST /api/checklist`; update completion with `PATCH /api/checklist/:id`
 (`completed` boolean) or remove an item with `DELETE /api/checklist/:id`.
+Inventory and checklist data are cached in the browser's IndexedDB as soon as
+it changes. Pending changes sync immediately when possible, are retried every
+five minutes, and sync again when connectivity returns. In production, the
+service worker caches the application shell so previously loaded inventory and
+checklists remain usable offline. Offline edits are associated with the signed-in
+user and retained until the server confirms the change.
 Unknown routes return a JSON 404 response. Run the backend test command with
 `npm test`.
