@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import OfflineStatus from '../components/OfflineStatus.jsx'
 import useAuth from '../context/useAuth.js'
 import {
-  createInventoryItem,
-  deleteInventoryItem,
-  getInventoryItems,
-  updateInventoryItem,
-} from '../services/api.js'
+  createLocalItem,
+  deleteLocalItem,
+  loadOfflineCollection,
+  updateLocalItem,
+} from '../services/offlineData.js'
 
 const CATEGORIES = [
   { label: 'All Supplies', value: 'all' },
@@ -77,15 +78,17 @@ function getErrorMessage(error) {
 }
 
 export default function InventoryPage() {
-  const { refreshSession } = useAuth()
+  const { refreshSession, user } = useAuth()
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [items, setItems] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
+  const [offlineMessage, setOfflineMessage] = useState('')
   const [notice, setNotice] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [form, setForm] = useState(INITIAL_FORM)
+  const [pendingItems, setPendingItems] = useState([])
   const [formError, setFormError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
@@ -99,16 +102,17 @@ export default function InventoryPage() {
     resources.find((resource) => resource.value === form.resourceType) || resources[0]
 
   const fetchItems = useCallback(async () => {
-    const result = await getInventoryItems()
-    return result.data.items
-  }, [])
+    return loadOfflineCollection(user.id, 'inventory')
+  }, [user.id])
 
   const loadItems = useCallback(async () => {
     setIsLoading(true)
     setLoadError('')
 
     try {
-      setItems(await fetchItems())
+      const result = await fetchItems()
+      setItems(result.items)
+      setOfflineMessage(result.error)
     } catch (error) {
       if (error.response?.status === 401) {
         await refreshSession()
@@ -123,11 +127,25 @@ export default function InventoryPage() {
   useEffect(() => {
     let active = true
 
+    const applyLoadedItems = (result) => {
+      if (active) {
+        setItems(result.items)
+        setOfflineMessage(result.error)
+        setLoadError('')
+      }
+    }
+
+    const handleOnline = () => {
+      fetchItems()
+        .then(applyLoadedItems)
+        .catch((error) => {
+          if (active) setLoadError(getErrorMessage(error))
+        })
+    }
+
     fetchItems()
-      .then((loadedItems) => {
-        if (active) {
-          setItems(loadedItems)
-        }
+      .then((result) => {
+        applyLoadedItems(result)
       })
       .catch((error) => {
         if (!active) return
@@ -143,9 +161,11 @@ export default function InventoryPage() {
           setIsLoading(false)
         }
       })
+    window.addEventListener('online', handleOnline)
 
     return () => {
       active = false
+      window.removeEventListener('online', handleOnline)
     }
   }, [fetchItems, refreshSession])
 
@@ -157,6 +177,7 @@ export default function InventoryPage() {
     const category = selectedCategory === 'all' ? 'food' : selectedCategory
     const defaultResource = CATEGORY_RESOURCES[category][0]
     setEditingItem(null)
+    setPendingItems([])
     setForm({
       ...INITIAL_FORM,
       category,
@@ -169,6 +190,7 @@ export default function InventoryPage() {
 
   function openEditModal(item) {
     setEditingItem(item)
+    setPendingItems([])
     setForm({
       name: item.name,
       quantity: String(item.quantity),
@@ -185,6 +207,7 @@ export default function InventoryPage() {
     if (isSaving) return
     setIsModalOpen(false)
     setEditingItem(null)
+    setPendingItems([])
     setFormError('')
   }
 
@@ -213,21 +236,56 @@ export default function InventoryPage() {
     }))
     setFormError('')
   }
+    function handleAddAnother() {
+    const name = form.name.trim()
+    const quantity = Number(form.quantity)
+
+  if (!name || name.length > 100) {
+    setFormError('Enter an item name with no more than 100 characters.')
+    return
+  }
+
+  if (!Number.isFinite(quantity) || quantity <= 0) {
+    setFormError('Quantity must be greater than zero.')
+    return
+  }
+
+    const newItem = {
+      name,
+      quantity,
+      category: form.category,
+      resourceType: form.resourceType,
+      unit: form.unit,
+      ...(form.resourceType === 'drink'
+        ? { shelfStable: form.shelfStable }
+        : {}),
+    }
+
+  setPendingItems((current) => [...current, newItem])
+  setForm((current) => ({ ...current, name: '', quantity: '1' }))
+  setFormError('')
+}
 
   async function handleSubmit(event) {
     event.preventDefault()
     const name = form.name.trim()
     const quantity = Number(form.quantity)
+    const hasCurrentItem = name.length > 0
 
-    if (!name || name.length > 100) {
-      setFormError('Enter an item name with no more than 100 characters.')
-      return
-    }
+  if ((editingItem || hasCurrentItem) && (!name || name.length > 100)) {
+    setFormError('Enter an item name with no more than 100 characters.')
+    return
+  }
 
-    if (!Number.isFinite(quantity) || quantity <= 0) {
-      setFormError('Quantity must be greater than zero.')
-      return
-    }
+  if ((editingItem || hasCurrentItem) && (!Number.isFinite(quantity) || quantity <= 0)) {
+    setFormError('Quantity must be greater than zero.')
+    return
+  }
+
+  if (!editingItem && !hasCurrentItem && pendingItems.length === 0) {
+    setFormError('Enter an item name.')
+    return
+  }
 
     setIsSaving(true)
     setFormError('')
@@ -242,25 +300,54 @@ export default function InventoryPage() {
     }
 
     try {
-      const result = editingItem
-        ? await updateInventoryItem(editingItem.id, itemData)
-        : await createInventoryItem(itemData)
-      const savedItem = result.data.item
+  if (editingItem) {
+    const savedItem = await updateLocalItem(user.id, 'inventory', editingItem, itemData)
 
-      setItems((current) =>
-        editingItem
-          ? current.map((item) => (item.id === savedItem.id ? savedItem : item))
-          : [savedItem, ...current],
+    setItems((current) =>
+      current.map((item) =>
+        item.id === savedItem.id ? savedItem : item
       )
-      setNotice(editingItem ? 'Inventory item updated.' : 'Inventory item added.')
-      setIsModalOpen(false)
-      setEditingItem(null)
+    )
+
+    setNotice('Inventory item updated.')
+  } else {
+    const itemsToSave = [
+      ...pendingItems,
+      ...(hasCurrentItem ? [itemData] : []),
+    ]
+
+    const results = await Promise.allSettled(
+      itemsToSave.map((item) => createLocalItem(user.id, 'inventory', item))
+    )
+
+    const savedItems = results.flatMap((result) =>
+      result.status === 'fulfilled' ? [result.value] : []
+    )
+
+    const failedItems = itemsToSave.filter(
+      (_, index) => results[index].status === 'rejected'
+    )
+
+    setItems((current) => [...savedItems, ...current])
+
+    if (failedItems.length > 0) {
+      setPendingItems(failedItems)
+      setForm((current) => ({ ...current, name: '', quantity: '1' }))
+      setFormError(
+        `${savedItems.length} saved, ${failedItems.length} failed. Try saving the remaining items again.`
+      )
+
+      return
+    }
+
+    setPendingItems([])
+    setNotice(`${savedItems.length} inventory item(s) added.`)
+  }
+
+  setIsModalOpen(false)
+  setEditingItem(null)
     } catch (error) {
-      if (error.response?.status === 401) {
-        await refreshSession()
-      } else {
-        setFormError(getErrorMessage(error))
-      }
+      setFormError(getErrorMessage(error))
     } finally {
       setIsSaving(false)
     }
@@ -274,7 +361,7 @@ export default function InventoryPage() {
     setLoadError('')
 
     try {
-      await deleteInventoryItem(item.id)
+      await deleteLocalItem(user.id, 'inventory', item)
       setItems((current) => current.filter((entry) => entry.id !== item.id))
       setNotice(`${item.name} was deleted.`)
     } catch (error) {
@@ -291,6 +378,7 @@ export default function InventoryPage() {
   return (
     <main className="min-h-screen bg-[#101713] text-[#eaf2ea]">
       <div className="mx-auto max-w-6xl px-6 py-10">
+        <OfflineStatus message={offlineMessage} />
 
     <div className="flex flex-wrap items-center justify-between gap-4">
       <h1 className="text-3xl font-bold">
@@ -462,7 +550,7 @@ export default function InventoryPage() {
                   value={form.name}
                   onChange={(event) => updateForm('name', event.target.value)}
                   placeholder="Enter item name"
-                  required
+                  required={editingItem || pendingItems.length === 0}
                   className="w-full rounded-md border border-[#304235] bg-[#101713] px-3 py-2 text-[#eaf2ea] outline-none focus:border-[#81aa69]"
                 />
               </div>
@@ -542,6 +630,42 @@ export default function InventoryPage() {
                   Shelf-stable (does not require refrigeration)
                 </label>
               )}
+              {!editingItem && (
+              <div className="space-y-2">
+                {pendingItems.map((item, index) => (
+                  <div key={index} className="flex justify-between text-sm">
+                    <span>
+                      {item.name} ({item.quantity} {item.unit})
+                    </span>
+
+                    <button
+                      type="button"
+                      disabled={isSaving}
+                      onClick={() =>
+                        setPendingItems((current) =>
+                          current.filter((_, i) => i !== index)
+                        )
+                      }
+                      className="text-[#f1bbb5]"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={handleAddAnother}
+                  className="rounded-md border border-[#81aa69] px-4 py-2 text-sm text-[#b6db8a]"
+                >
+                  + Add Another Item
+                </button>
+              </div>
+            )}
+
+
+
 
               {formError && (
                 <p className="rounded-md border border-[#87524a] bg-[#372321] p-3 text-sm text-[#f1bbb5]" role="alert">
@@ -563,7 +687,13 @@ export default function InventoryPage() {
                   disabled={isSaving}
                   className="rounded-md bg-[#b6db8a] px-4 py-2 text-sm font-semibold text-[#101713] hover:bg-[#c9eca0] disabled:opacity-60"
                 >
-                  {isSaving ? 'Saving…' : editingItem ? 'Save Changes' : 'Save Item'}
+                  {isSaving
+                  ? 'Saving…'
+                  : editingItem
+                    ? 'Save Changes'
+                    : pendingItems.length > 0
+                      ? 'Save All Items'
+                      : 'Save Item'}
                 </button>
               </div>
             </form>

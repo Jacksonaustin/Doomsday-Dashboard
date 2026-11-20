@@ -11,6 +11,8 @@ const leaderboardRoutes = require('./routes/leaderboardRoutes')
 const checklistRoutes = require('./routes/checklistRoutes');
 
 const app = express();
+app.disable('x-powered-by');
+app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS) || 1); // compose: 1 (nginx), OpenShift: 2 (router + nginx)
 
 app.use(express.json());
 app.use(cookieParser());

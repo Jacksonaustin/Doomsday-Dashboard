@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: ai }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: ai } }
+  template:
+    metadata: { labels: { app: ai } }
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: ai
+          image: ai:latest
+          ports: [{ containerPort: 8000 }]
+          startupProbe:   { httpGet: { path: /health, port: 8000 }, periodSeconds: 5, failureThreshold: 30 }
+          readinessProbe: { httpGet: { path: /health, port: 8000 }, periodSeconds: 10 }
+          resources:
+            requests: { cpu: 250m, memory: 1Gi }
+            limits:   { memory: 2Gi }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: ai }
+spec:
+  selector: { app: ai }
+  ports: [{ port: 8000, targetPort: 8000 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: backend }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: backend } }
+  template:
+    metadata: { labels: { app: backend } }
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: backend
+          image: backend:latest
+          ports: [{ containerPort: 5050 }]
+          envFrom: [{ secretRef: { name: backend-secrets } }]
+          env:                       # these override anything in the secret
+            - { name: PORT, value: "5050" }
+            - { name: NODE_ENV, value: production }
+            - { name: AI_SERVICE_URL, value: "http://ai:8000" }
+            - { name: TRUST_PROXY_HOPS, value: "2" }
+          readinessProbe: { httpGet: { path: /api/health, port: 5050 }, periodSeconds: 10 }
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits:   { memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: backend }
+spec:
+  selector: { app: backend }
+  ports: [{ port: 5050, targetPort: 5050 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: frontend }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: frontend } }
+  template:
+    metadata: { labels: { app: frontend } }
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: frontend
+          image: frontend:latest
+          ports: [{ containerPort: 8080 }]
+          readinessProbe: { httpGet: { path: /, port: 8080 }, periodSeconds: 10 }
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits:   { memory: 128Mi }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: frontend }
+spec:
+  selector: { app: frontend }
+  ports: [{ port: 8080, targetPort: 8080 }]
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata: { name: frontend }
+spec:
+  to: { kind: Service, name: frontend }
+  port: { targetPort: 8080 }
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

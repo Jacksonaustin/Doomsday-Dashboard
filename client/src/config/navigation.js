@@ -2,6 +2,7 @@
 // Add future tabs here only after their pages/routes actually exist.
 export const publicNavItems = [
   { label: 'Home', to: '/' },
+  { label: 'Overview', to: '/overview' },
   { label: 'Inventory', to: '/inventory' },
     { label: 'Scenarios', to: '/scenarios' },
   { label: 'Recommendations', to: '/recommendations' },

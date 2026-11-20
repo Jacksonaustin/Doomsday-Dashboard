@@ -1,0 +1,30 @@
+
+services:
+  frontend:
+    build: ./client
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    environment:
+      PORT: "5050"
+      NODE_ENV: ${NODE_ENV:-development}
+      AI_SERVICE_URL: http://ai:8000
+    depends_on:
+      - ai
+    restart: unless-stopped
+
+  ai:
+    build: ./ml-recommend
+    volumes:
+      - ai-model-cache:/home/appuser/.cache/huggingface
+    restart: unless-stopped
+
+volumes:
+  ai-model-cache:

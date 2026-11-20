@@ -79,6 +79,7 @@ function toPublicItem(item) {
     unit: item.unit,
     resourceType: item.resourceType,
     category: item.category || resource.category,
+    ...(item.clientId ? { clientId: item.clientId } : {}),
     ...(item.resourceType === 'drink' ? { shelfStable: item.shelfStable } : {}),
     ...(item.expiresAt ? { expiresAt: item.expiresAt } : {}),
     createdAt: item.createdAt,
@@ -105,10 +106,33 @@ async function getInventoryItem(userId, itemId) {
 }
 
 async function createInventoryItem(userId, input) {
-  const item = await InventoryItem.create({
-    userId,
-    ...validateItem(input)
-  });
+  const data = validateItem(input);
+  const clientId = input.clientId;
+  if (
+    clientId !== undefined &&
+    (typeof clientId !== 'string' || !clientId.trim() || clientId.trim().length > 100)
+  ) {
+    throw httpError(400, 'Client ID must be a non-empty string of 100 characters or fewer');
+  }
+
+  if (clientId) {
+    const existing = await InventoryItem.findOne({ userId, clientId: clientId.trim() });
+    if (existing) return toPublicItem(existing);
+  }
+
+  let item;
+  try {
+    item = await InventoryItem.create({
+      userId,
+      ...data,
+      ...(clientId ? { clientId: clientId.trim() } : {})
+    });
+  } catch (error) {
+    if (error.code !== 11000 || !clientId) throw error;
+
+    item = await InventoryItem.findOne({ userId, clientId: clientId.trim() });
+    if (!item) throw error;
+  }
 
   return toPublicItem(item);
 }
