@@ -10,8 +10,6 @@ from .food import FoodClassifier
 ranker = None
 food_classifier = None
 
-ranker = None
-
 
 @asynccontextmanager
 async def lifespan(app):
@@ -37,6 +35,7 @@ class RecommendationRequest(BaseModel):
     top_k: int = Field(default=3, ge=1, le=5)
     # Optional, so older callers still work. Unknown keys rank like no scenario.
     scenario: str | None = Field(default=None, max_length=50)
+
 
 class FoodRequest(BaseModel):
     # Same limit as an inventory item's name.
@@ -67,6 +66,7 @@ def recommendations(request: RecommendationRequest):
         },
         "message": "Recommendations ranked" if results else "No shortages to rank",
     }
+
 
 @app.post("/food/classify")
 def classify_food(request: FoodRequest):

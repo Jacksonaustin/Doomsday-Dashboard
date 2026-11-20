@@ -90,5 +90,16 @@
   {"text": "diapers", "resourceType": null},
   {"text": "box of matches", "resourceType": null},
   {"text": "can opener", "resourceType": null},
-  {"text": "paper plates", "resourceType": null}
+  {"text": "paper plates", "resourceType": null},
+  {"text": "2 boxes Annie's mac", "resourceType": "meal", "perishable": false, "needsCooking": true, "quantity": 2},
+  {"text": "Amy's lentil soup", "resourceType": "meal", "perishable": false, "needsCooking": false, "quantity": null},
+  {"text": "Totino's pizza rolls", "resourceType": "meal", "perishable": true, "needsCooking": true, "quantity": null},
+  {"text": "Del Monte green beans", "resourceType": "meal", "perishable": false, "needsCooking": false, "quantity": null},
+  {"text": "4 cans Goya black beans", "resourceType": "meal", "perishable": false, "needsCooking": false, "quantity": 4},
+  {"text": "RXBAR", "resourceType": "meal", "perishable": false, "needsCooking": false, "quantity": null},
+  {"text": "Kirkland trail mix", "resourceType": "meal", "perishable": false, "needsCooking": false, "quantity": null},
+  {"text": "Lunchables", "resourceType": "meal", "perishable": true, "needsCooking": false, "quantity": null},
+  {"text": "Duracell AA", "resourceType": null},
+  {"text": "Clorox wipes", "resourceType": null},
+  {"text": "Kleenex", "resourceType": null}
 ]
