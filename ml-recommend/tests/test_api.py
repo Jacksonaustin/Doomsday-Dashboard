@@ -80,3 +80,17 @@ def test_unknown_food_is_not_guessed(client):
 @pytest.mark.parametrize("payload", [{}, {"name": ""}, {"name": "x" * 101}])
 def test_invalid_food_requests_are_rejected(client, payload):
     assert client.post("/food/classify", json=payload).status_code == 422
+
+
+def test_one_unknown_resource_does_not_break_the_rest(client):
+    response = client.post("/recommendations", json={"shortages": [
+        {"resource": "drinking_watr", "severity": "critical",
+         "description": "Household of 4 has 0 of 6 gallons of drinking water needed for a 3-day flood."},
+        {"resource": "lighting", "severity": "high",
+         "description": "Household of 4 has 0 of 1 pieces of flashlight needed for a 3-day flood."},
+    ]})
+    results = {r["resource"]: r for r in response.json()["data"]["results"]}
+
+    assert response.status_code == 200
+    assert results["drinking_watr"]["matched"] is False
+    assert results["lighting"]["matched"] is True

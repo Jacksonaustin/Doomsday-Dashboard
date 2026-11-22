@@ -56,9 +56,11 @@ async function finishPendingLogout() {
     await logoutUser()
     await clearLogoutPending()
   } catch (error) {
-    // The server answered, so there's nothing more to retry. With no answer we
-    // stay signed out and try again on the next load.
-    if (error.response) await clearLogoutPending().catch(() => {})
+    // A 4xx means the server rejected the cookie, so there's no session left to end.
+    // A 5xx (or a 502/503 from the proxy) leaves the cookie valid, so keep the
+    // marker, stay signed out and try again on the next load.
+    const status = error.response?.status
+    if (status >= 400 && status < 500) await clearLogoutPending().catch(() => {})
   }
   return true
 }

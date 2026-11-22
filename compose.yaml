@@ -24,5 +24,15 @@ services:
     build: ./ml-recommend
     restart: unless-stopped
 
+  # Optional local database, for running without MongoDB Atlas:
+  #   set MONGO_URI=mongodb://mongo:27017/doomsday in backend/.env, then
+  #   docker compose --profile local-db up -d --build
+  mongo:
+    image: mongo:8.0
+    profiles: ["local-db"]
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+
 volumes:
-  ai-model-cache:
+  mongo-data:

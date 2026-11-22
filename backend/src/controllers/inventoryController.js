@@ -1,4 +1,6 @@
 const inventoryServices = require('../services/inventoryServices');
+const { classifyFood } = require('../services/foodClassifierService');
+const httpError = require('../utils/httpError');
 
 async function list(req, res, next) {
   try {
@@ -53,4 +55,24 @@ async function remove(req, res, next) {
   }
 }
 
-module.exports = { create, getOne, list, remove, update };
+// Same limit as an inventory item's name.
+const MAX_NAME_LENGTH = 100;
+
+async function classify(req, res, next) {
+  try {
+    const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+    if (!name || name.length > MAX_NAME_LENGTH) {
+      throw httpError(400, `name must be 1 to ${MAX_NAME_LENGTH} characters`);
+    }
+    const result = await classifyFood(name);
+    res.status(200).json({
+      success: true,
+      data: result,
+      message: result.matched ? 'Item recognized' : 'Could not recognize this item'
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = { classify, create, getOne, list, remove, update };

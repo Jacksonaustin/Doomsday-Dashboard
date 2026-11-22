@@ -171,3 +171,18 @@ def test_falls_back_to_tfidf_when_the_model_fails(monkeypatch):
 
     assert ranker.method == "tfidf"
     assert ranker.rank(DRINKING, resource="drinking_water")["recommendations"][0]["id"] == "water-store-supply"
+
+
+@pytest.mark.parametrize("ranker_name", ["semantic", "tfidf"])
+def test_unknown_resource_gets_generic_advice_not_a_catalog_guess(request, ranker_name):
+    # "drinking_watr" used to search the whole catalog and return sanitation advice, marked matched.
+    result = request.getfixturevalue(ranker_name).rank(DRINKING, resource="drinking_watr")
+
+    assert result["matched"] is False
+    assert [r["id"] for r in result["recommendations"]] == ["generic-kit"]
+
+
+def test_no_resource_still_searches_the_whole_catalog(tfidf):
+    result = tfidf.rank(DRINKING)
+    assert result["matched"] is True
+    assert result["recommendations"][0]["category"] == "water"
