@@ -28,7 +28,9 @@ services:
   #   set MONGO_URI=mongodb://mongo:27017/doomsday in backend/.env, then
   #   docker compose --profile local-db up -d --build
   mongo:
-    image: mongo:8.0
+    # Exact version: mongo 8.0 and newer images refuse to start on Docker Desktop's
+    # Linux kernel 7.0.x (SERVER-121912). 8.2.12 runs.
+    image: mongo:8.2.12
     profiles: ["local-db"]
     volumes:
       - mongo-data:/data/db
