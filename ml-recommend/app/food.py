@@ -89,13 +89,51 @@ class FoodClassifier:
         if not name:
             return {"matched": False, "quantity": quantity, "confidence": None}
 
-        scores = self._scores(name)
-        best = max(range(len(scores)), key=scores.__getitem__)
-        confidence = round(float(scores[best]), 3)
+        normalized_name = re.sub(r"[^a-z0-9]+", " ", name.casefold()).strip()
+
+        alias_match = next(
+            (
+                index for index, item in enumerate(self.catalog)
+                if any(
+                    re.sub(r"[^a-z0-9]+", " ", alias.casefold()).strip() == normalized_name
+                    for alias in item.get("aliases", [])
+                )
+            ),
+            None,
+        )
+
+        if alias_match is not None:
+            best = alias_match
+            confidence = 1.0
+        else:
+            scores = self._scores(name)
+            best = max(range(len(scores)), key=scores.__getitem__)
+            confidence = round(float(scores[best]), 3)
+
 
         item = self.catalog[best]
+
+        # Reject classifications that contradict obvious input details.
+        unsafe_raw_meat = (
+            re.search(r"\b(raw|uncooked)\b", normalized_name)
+            and re.search(r"\b(chicken|turkey|beef|pork|lamb|duck)\b", normalized_name)
+            and (item["perishable"] is False or item["needsCooking"] is False)
+        )
+
+        unsafe_dry_food = (
+            re.search(r"\b(uncooked|dry)\b", normalized_name)
+            and re.search(r"\b(quinoa|rice|beans|pasta|couscous)\b", normalized_name)
+            and item["needsCooking"] is False
+        )
+
+        non_food = re.search(r"\b(cat|kitty)\s+litter\b", normalized_name)
+
+        if unsafe_raw_meat or unsafe_dry_food or non_food:
+            return {"matched": False, "quantity": quantity, "confidence": confidence}
+
         if confidence < MIN_CONFIDENCE[self.method] or item["resourceType"] is None:
             return {"matched": False, "quantity": quantity, "confidence": confidence}
+
 
         meals = item["mealsPerUnit"]
         return {
