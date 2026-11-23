@@ -8,6 +8,9 @@ import {
   loadOfflineCollection,
   updateLocalItem,
 } from '../services/offlineData.js'
+import { parseBulkInventory } from '../utils/parseBulkInventory.js'
+import { classifySupply } from '../utils/classifySupply.js'
+import api from '../services/api.js'
 
 const CATEGORIES = [
   { label: 'All Supplies', value: 'all' },
@@ -89,6 +92,9 @@ export default function InventoryPage() {
   const [editingItem, setEditingItem] = useState(null)
   const [form, setForm] = useState(INITIAL_FORM)
   const [pendingItems, setPendingItems] = useState([])
+  const [bulkText, setBulkText] = useState('')
+  const [bulkPreview, setBulkPreview] = useState([])
+  const [addMode, setAddMode] = useState('smart')
   const [formError, setFormError] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
@@ -174,6 +180,9 @@ export default function InventoryPage() {
   )
 
   function openAddModal() {
+    setBulkText('')
+    setBulkPreview([])
+    setAddMode('smart')
     const category = selectedCategory === 'all' ? 'food' : selectedCategory
     const defaultResource = CATEGORY_RESOURCES[category][0]
     setEditingItem(null)
@@ -236,6 +245,129 @@ export default function InventoryPage() {
     }))
     setFormError('')
   }
+  function updateBulkItem(index, field, value) {
+  setBulkPreview((current) =>
+    current.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    )
+  )
+}
+function updateBulkUnit(index, unit) {
+  setBulkPreview((current) =>
+    current.map((item, i) =>
+      i === index
+        ? {
+            ...item,
+            suggestion: {
+              ...item.suggestion,
+              unit,
+            },
+          }
+        : item
+    )
+  )
+}
+function updateBulkResource(index, resourceType) {
+  setBulkPreview((current) =>
+    current.map((item, i) => {
+      if (i !== index) return item
+
+      const category = item.suggestion?.category ?? 'other'
+      const resource = CATEGORY_RESOURCES[category].find(
+        (option) => option.value === resourceType
+      )
+
+      if (!resource) return item
+
+      return {
+        ...item,
+        suggestion: {
+          category,
+          resourceType,
+          unit: resource.units[0],
+        },
+      }
+    })
+  )
+}
+function updateBulkCategory(index, category) {
+  const resource = CATEGORY_RESOURCES[category][0]
+
+  setBulkPreview((current) =>
+    current.map((item, i) =>
+      i === index
+        ? {
+            ...item,
+            suggestion: {
+              category,
+              resourceType: resource.value,
+              unit: resource.units[0],
+            },
+          }
+        : item
+    )
+  )
+}
+
+function removeBulkItem(index) {
+  setBulkPreview((current) =>
+    current.filter((_, i) => i !== index)
+  )
+}
+
+    async function handleBulkPreview() {
+      const parsed = parseBulkInventory(bulkText)
+      setFormError('')
+
+      const preview = await Promise.all(
+        parsed.map(async (item) => {
+          // First, try our JavaScript rules for regular supplies.
+          const supplyMatch = classifySupply(item.name)
+
+          if (supplyMatch) {
+            return { ...item, suggestion: supplyMatch }
+          }
+
+          // If no supply rule matched, ask the existing food AI.
+          try {
+            const response = await api.post('/inventory/classify', {
+              name: item.originalText,
+            })
+
+            const result = response.data?.data
+
+            if (
+              result?.matched &&
+              ['meal', 'infant_food', 'pet_food'].includes(result.resourceType)
+            ) {
+              const resource = CATEGORY_RESOURCES.food.find(
+                (option) => option.value === result.resourceType
+              )
+
+              return {
+                ...item,
+                suggestion: {
+                  category: 'food',
+                  resourceType: resource.value,
+                  unit: resource.units[0],
+                },
+              }
+            }
+          } catch (error) {
+            console.warn('Food classification unavailable:', error)
+          }
+
+          // Unknown items stay available for manual review.
+          return { ...item, suggestion: null }
+        })
+      )
+
+      setBulkPreview(preview)
+    }
+
+
+
+
     function handleAddAnother() {
     const name = form.name.trim()
     const quantity = Number(form.quantity)
@@ -266,8 +398,91 @@ export default function InventoryPage() {
   setFormError('')
 }
 
+async function handleBulkSave() {
+  if (bulkPreview.length === 0) {
+    setFormError('Preview at least one item before saving.')
+    return
+  }
+
+  const unreviewed = bulkPreview.findIndex((item) => !item.suggestion)
+
+  if (unreviewed !== -1) {
+    setFormError(`Please review the category for Item ${unreviewed + 1}.`)
+    return
+  }
+
+  const itemsToSave = bulkPreview.map((item) => ({
+    name: item.name.trim(),
+    quantity: Number(item.quantity),
+    category: item.suggestion.category,
+    resourceType: item.suggestion.resourceType,
+    unit: item.suggestion.unit,
+    ...(item.suggestion.resourceType === 'drink'
+      ? { shelfStable: item.shelfStable ?? false }
+      : {}),
+  }))
+
+  const invalidIndex = itemsToSave.findIndex((item) => {
+    const resource = CATEGORY_RESOURCES[item.category]?.find(
+      (option) => option.value === item.resourceType
+    )
+
+    return (
+      !item.name ||
+      item.name.length > 100 ||
+      !Number.isFinite(item.quantity) ||
+      item.quantity <= 0 ||
+      !resource ||
+      !resource.units.includes(item.unit)
+    )
+  })
+
+  if (invalidIndex !== -1) {
+    setFormError(`Please check the fields for Item ${invalidIndex + 1}.`)
+    return
+  }
+
+  setIsSaving(true)
+  setFormError('')
+  setNotice('')
+
+  try {
+    const results = await Promise.allSettled(
+      itemsToSave.map((item) => createLocalItem(user.id, 'inventory', item))
+    )
+
+    const savedItems = results.flatMap((result) =>
+      result.status === 'fulfilled' ? [result.value] : []
+    )
+
+    const failedItems = bulkPreview.filter(
+      (_, index) => results[index].status === 'rejected'
+    )
+
+    setItems((current) => [...savedItems, ...current])
+
+    if (failedItems.length > 0) {
+      setBulkPreview(failedItems)
+      setFormError(
+        `${savedItems.length} saved, ${failedItems.length} failed. Retry the remaining items.`
+      )
+      return
+    }
+
+    setNotice(`${savedItems.length} inventory item(s) added.`)
+    setBulkPreview([])
+    setBulkText('')
+    setIsModalOpen(false)
+  } catch (error) {
+    setFormError(getErrorMessage(error))
+  } finally {
+    setIsSaving(false)
+  }
+}
+
   async function handleSubmit(event) {
     event.preventDefault()
+    if (!editingItem && addMode === 'smart') return
     const name = form.name.trim()
     const quantity = Number(form.quantity)
     const hasCurrentItem = name.length > 0
@@ -516,12 +731,12 @@ export default function InventoryPage() {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-8">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
           <section
             role="dialog"
             aria-modal="true"
             aria-labelledby="item-dialog-title"
-            className="my-auto w-full max-w-md rounded-xl border border-[#304235] bg-[#18231c] p-6 shadow-2xl"
+            className="w-full max-w-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-xl border border-[#304235] bg-[#18231c] p-6 shadow-2xl"
           >
             <div className="flex items-center justify-between gap-4">
               <h2 id="item-dialog-title" className="text-xl font-semibold">
@@ -539,6 +754,260 @@ export default function InventoryPage() {
             </div>
 
             <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
+
+          {!editingItem && (
+            <div className="grid grid-cols-2 gap-2 rounded-lg bg-[#101713] p-1">
+              <button
+                type="button"
+                aria-pressed={addMode === 'smart'}
+                onClick={() => {
+                  setAddMode('smart')
+                  setFormError('')
+                }}
+                className={`rounded-md px-4 py-3 text-sm font-semibold transition-colors ${
+                  addMode === 'smart'
+                    ? 'bg-[#b6db8a] text-[#101713]'
+                    : 'text-[#b5c6b7] hover:bg-[#304235]'
+                }`}
+              >
+                Smart Add
+              </button>
+
+              <button
+                type="button"
+                aria-pressed={addMode === 'manual'}
+                onClick={() => {
+                  setAddMode('manual')
+                  setFormError('')
+                }}
+                className={`rounded-md px-4 py-3 text-sm font-semibold transition-colors ${
+                  addMode === 'manual'
+                    ? 'bg-[#b6db8a] text-[#101713]'
+                    : 'text-[#b5c6b7] hover:bg-[#304235]'
+                }`}
+              >
+                Manual Add
+              </button>
+            </div>
+          )}
+
+
+        {!editingItem && addMode === 'smart' && (
+          <div className="rounded-lg border border-[#304235] bg-[#101713] p-4">
+            <label htmlFor="bulk-input" className="mb-2 block text-sm font-semibold">
+              Smart Bulk Add
+            </label>
+
+            <textarea
+              id="bulk-input"
+              rows={3}
+              value={bulkText}
+              onChange={(event) => setBulkText(event.target.value)}
+              placeholder="3 flashlights, 12 batteries, 6 cans of soup..."
+              className="w-full rounded-md border border-[#304235] bg-[#18231c] p-3 text-sm text-white"
+            />
+
+            <button
+              type="button"
+              onClick={handleBulkPreview}
+              className="mt-3 rounded-md bg-[#b6db8a] px-4 py-2 text-sm font-semibold text-[#101713]"
+            >
+              Preview Items
+            </button>
+
+            {bulkPreview.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <p className="text-sm font-semibold">
+                  {bulkPreview.length} items detected
+                </p>
+
+
+                {bulkPreview.map((item, index) => (
+                  <div
+                    key={index}
+                    className="rounded-lg border border-[#304235] bg-[#18231c] p-4"
+                  >
+                    <div className="mb-3 flex items-center justify-between">
+                      <p className="text-sm font-semibold">Item {index + 1}</p>
+
+                      <button
+                        type="button"
+                        onClick={() => removeBulkItem(index)}
+                        className="text-sm text-[#f1bbb5] hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-[1fr_120px]">
+                      <div>
+                        <label
+                          htmlFor={`bulk-name-${index}`}
+                          className="mb-1 block text-xs text-[#b5c6b7]"
+                        >
+                          Item Name
+                        </label>
+                        <input
+                          id={`bulk-name-${index}`}
+                          value={item.name}
+                          onChange={(event) =>
+                            updateBulkItem(index, 'name', event.target.value)
+                          }
+                          maxLength={100}
+                          className="w-full rounded-md border border-[#304235] bg-[#101713] p-2 text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor={`bulk-quantity-${index}`}
+                          className="mb-1 block text-xs text-[#b5c6b7]"
+                        >
+                          Quantity
+                        </label>
+                        <input
+                          id={`bulk-quantity-${index}`}
+                          type="number"
+                          min="0.01"
+                          step="any"
+                          value={item.quantity}
+                          onChange={(event) =>
+                            updateBulkItem(index, 'quantity', event.target.value)
+                          }
+                          className="w-full rounded-md border border-[#304235] bg-[#101713] p-2 text-sm"
+                        />
+                      </div>
+                    </div>
+
+
+                  <div className="mt-3">
+                    <label
+                      htmlFor={`bulk-category-${index}`}
+                      className="mb-1 block text-xs text-[#b5c6b7]"
+                    >
+                      Category
+                    </label>
+
+                    <select
+                      id={`bulk-category-${index}`}
+                      value={item.suggestion?.category ?? 'other'}
+                      onChange={(event) =>
+                        updateBulkCategory(index, event.target.value)
+                      }
+                      className="w-full rounded-md border border-[#304235] bg-[#101713] p-2 text-sm"
+                    >
+                      {CATEGORIES.filter((category) => category.value !== 'all').map(
+                        (category) => (
+                          <option key={category.value} value={category.value}>
+                            {category.label}
+                          </option>
+                        )
+                      )}
+                    </select>
+
+                  {!item.suggestion && (
+                    <div className="mt-2 text-xs text-[#f4c27a]">
+                      <p>Category wasn't recognized. Please review this item.</p>
+                      <button
+                        type="button"
+                        onClick={() => updateBulkCategory(index, 'other')}
+                        className="mt-2 underline"
+                      >
+                        Keep as Other
+                      </button>
+                    </div>
+                  )}
+                  </div>
+
+                  <div className="mt-3">
+                    <label
+                      htmlFor={`bulk-resource-${index}`}
+                      className="mb-1 block text-xs text-[#b5c6b7]"
+                    >
+                      Supply Type
+                    </label>
+
+                    <select
+                      id={`bulk-resource-${index}`}
+                      value={item.suggestion?.resourceType ?? 'other'}
+                      onChange={(event) =>
+                        updateBulkResource(index, event.target.value)
+                      }
+                      className="w-full rounded-md border border-[#304235] bg-[#101713] p-2 text-sm"
+                    >
+                      {CATEGORY_RESOURCES[
+                        item.suggestion?.category ?? 'other'
+                      ].map((resource) => (
+                        <option key={resource.value} value={resource.value}>
+                          {resource.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="mt-3">
+                    <label
+                      htmlFor={`bulk-unit-${index}`}
+                      className="mb-1 block text-xs text-[#b5c6b7]"
+                    >
+                      Unit
+                    </label>
+
+                    <select
+                      id={`bulk-unit-${index}`}
+                      value={
+                        item.suggestion?.unit ??
+                        CATEGORY_RESOURCES.other[0].units[0]
+                      }
+                      onChange={(event) =>
+                        updateBulkUnit(index, event.target.value)
+                      }
+                      className="w-full rounded-md border border-[#304235] bg-[#101713] p-2 text-sm"
+                    >
+                      {(
+                        CATEGORY_RESOURCES[
+                          item.suggestion?.category ?? 'other'
+                        ].find(
+                          (resource) =>
+                            resource.value === (item.suggestion?.resourceType ?? 'other')
+                        )?.units ?? ['pieces']
+                      ).map((unit) => (
+                        <option key={unit} value={unit}>
+                          {UNIT_LABELS[unit]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+
+                  </div>
+                ))}
+
+              </div>
+            )}
+
+
+            {bulkPreview.length > 0 && (
+              <button
+                type="button"
+                onClick={handleBulkSave}
+                disabled={isSaving}
+                className="mt-4 w-full rounded-md bg-[#b6db8a] px-4 py-3 text-sm font-semibold text-[#101713] hover:bg-[#c9eca0] disabled:opacity-60"
+              >
+                {isSaving
+                  ? 'Saving Items...'
+                  : `Save All ${bulkPreview.length} Items`}
+              </button>
+            )}
+
+            <p className="mt-3 text-xs text-[#b5c6b7]">
+              Review each item before saving.
+            </p>
+
+          </div>
+        )}
+            {(editingItem || addMode === 'manual') && (
+              <div className="space-y-4">
               <div>
                 <label className="mb-2 block text-sm font-medium" htmlFor="item-name">
                   Item Name
@@ -666,13 +1135,14 @@ export default function InventoryPage() {
 
 
 
-
+              </div>
+)}
               {formError && (
                 <p className="rounded-md border border-[#87524a] bg-[#372321] p-3 text-sm text-[#f1bbb5]" role="alert">
                   {formError}
                 </p>
               )}
-
+              {(editingItem || addMode === 'manual') && (
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
@@ -696,6 +1166,7 @@ export default function InventoryPage() {
                       : 'Save Item'}
                 </button>
               </div>
+              )}
             </form>
           </section>
         </div>
