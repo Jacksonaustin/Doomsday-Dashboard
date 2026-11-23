@@ -22,9 +22,19 @@ services:
 
   ai:
     build: ./ml-recommend
+    restart: unless-stopped
+
+  # Optional local database, for running without MongoDB Atlas:
+  #   set MONGO_URI=mongodb://mongo:27017/doomsday in backend/.env, then
+  #   docker compose --profile local-db up -d --build
+  mongo:
+    # Exact version: mongo 8.0 and newer images refuse to start on Docker Desktop's
+    # Linux kernel 7.0.x (SERVER-121912). 8.2.12 runs.
+    image: mongo:8.2.12
+    profiles: ["local-db"]
     volumes:
-      - ai-model-cache:/home/appuser/.cache/huggingface
+      - mongo-data:/data/db
     restart: unless-stopped
 
 volumes:
-  ai-model-cache:
+  mongo-data:

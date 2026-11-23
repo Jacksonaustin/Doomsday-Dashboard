@@ -20,11 +20,15 @@ MODEL_NAME = "all-MiniLM-L6-v2"
 # Scores mean different things for each method, so each has its own thresholds.
 # Set from the gap engine's real shortage sentences: retune if the catalog or sentences change.
 # semantic: real top answers score 0.34 and up, unrelated sentences 0.29 at most.
-# tfidf: the two overlap (some right answers score ~0.06, small talk can reach ~0.22),
-# so a lower low_confidence would mark junk as confident. Expect more flags on the fallback.
+# tfidf: raw scores don't separate right from wrong. Right top answers in eval/labeled.json
+# go as low as 0.077, while off-topic text that shares one word ("household", "weather")
+# reaches 0.27. 0.2 flagged 10 of 44 correct answers and still let that junk through, so
+# the warning now only marks barely-matched answers (1 of 44 flagged, where the
+# scenario boost lifts a lower-scoring right answer to the top). The backend only
+# sends gap-engine sentences with a known resource, so junk input isn't a real case.
 THRESHOLDS = {
     "semantic": {"low_confidence": 0.32, "no_match": 0.15},
-    "tfidf": {"low_confidence": 0.2, "no_match": 0.05},
+    "tfidf": {"low_confidence": 0.06, "no_match": 0.05},
 }
 
 # Gap engine resource -> catalog categories to rank within.
@@ -64,12 +68,16 @@ GENERIC_ADVICE = {
 }
 
 
+def _generic_result():
+    return {"matched": False, "lowConfidence": True, "recommendations": [{**GENERIC_ADVICE, "confidence": None}]}
+
+
 def load_catalog(path=CATALOG_PATH):
     catalog = json.loads(Path(path).read_text())
     for item in catalog:
         missing = {"id", "category", "title", "explanation", "text"} - item.keys()
         if missing:
-            raise ValueError(f"Catalog item {item.get('id')} is missing {sorted(missing)}");
+            raise ValueError(f"Catalog item {item.get('id')} is missing {sorted(missing)}")
         unknown = set(item.get("scenarios", [])) - SCENARIOS
         if unknown:
             raise ValueError(f"Catalog item {item['id']} has unknown scenarios {sorted(unknown)}")
@@ -117,13 +125,21 @@ class Ranker:
 
     def rank(self, query, resource=None, top_k=3, scenario=None):
         thresholds = THRESHOLDS[self.method]
+
+        # A misspelled or renamed resource used to search the whole catalog, so a
+        # water shortage could come back with sanitation advice marked as matched.
+        # Say we don't know it instead: matched=False shows up in the backend's
+        # live integration test, and tests/test_contract.py catches the rename.
+        if resource is not None and resource not in RESOURCE_CATEGORIES:
+            logger.warning("Unknown resource %r; returning generic advice", resource)
+            return _generic_result()
+
         scored = zip(self._scores(query), self.catalog)
 
         # Known resource: only rank catalog items in its categories.
-        # Unknown resource: search the whole catalog.
-        categories = RESOURCE_CATEGORIES.get(resource)
-       
-        if categories:
+        # No resource given: search the whole catalog.
+        if resource is not None:
+            categories = RESOURCE_CATEGORIES[resource]
             scored = [(score, item) for score, item in scored if item["category"] in categories]
 
         # Drop weak matches, so a 0.0 score is never shown as a recommendation.
@@ -136,9 +152,7 @@ class Ranker:
 
         # Nothing relevant at all: give generic advice instead of a random match.
         if not ranked:
-            return {"matched": False, "lowConfidence": True, "recommendations": [
-                {**GENERIC_ADVICE, "confidence": None}
-            ]}
+            return _generic_result()
 
         recommendations = [
             {

@@ -135,12 +135,48 @@ Can:
 
 ## Local Development
 
-### Prerequisites
+### Quick start (Docker)
 
-- Node.js
-- Python 3.11+
-- MongoDB
-- Docker (recommended)
+The fastest way to run everything is Docker Compose. See
+[Documentation/DOCKER_SETUP.md](Documentation/DOCKER_SETUP.md).
+
+```bash
+cp backend/.env.example backend/.env   # then set MONGO_URI and JWT_SECRET
+docker compose up -d --build
+```
+
+Open http://localhost:8080. To use a local MongoDB instead of Atlas, set
+`MONGO_URI=mongodb://mongo:27017/doomsday` in `backend/.env` and add
+`--profile local-db` to the `docker compose` command.
+
+### Prerequisites (running each service by hand)
+
+- Node.js 18+
+- Python 3.12 (the version the Docker image uses; 3.11+ works)
+- MongoDB (Atlas or local)
+
+Start the services in this order: AI service, backend, frontend.
+
+### AI Service
+
+The FastAPI service is in `ml-recommend/`. The first start downloads the
+`all-MiniLM-L6-v2` model (about 90 MB); after that it is cached.
+
+```bash
+cd ml-recommend
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/uvicorn app.main:app --port 8000
+```
+
+`GET http://localhost:8000/health` reports `"method": "semantic"` when the model
+loaded, or `"tfidf"` if it fell back to keyword matching. Set
+`AI_FORCE_FALLBACK=1` to force the fallback.
+
+| Endpoint | Purpose |
+| --- | --- |
+| `POST /recommendations` | Ranks advice for each shortage from a simulation |
+| `POST /food/classify` | Guesses resource type, quantity and shelf life from a typed item name |
 
 ### Frontend
 
@@ -165,10 +201,11 @@ Before starting, copy `backend/.env.example` to `backend/.env` (use
 `Copy-Item backend/.env.example backend/.env` in PowerShell or
 `cp backend/.env.example backend/.env` on macOS/Linux). Update `MONGO_URI` if
 MongoDB is not using the local default. Replace `JWT_SECRET` with a random value
-at least 32 characters long. The API starts on port `5050` (had to change from 5000 to 5050 since mac uses 5000 for airplay) by default; set
-`PORT` to change it.
+at least 32 characters long. Keep `AI_SERVICE_URL` pointing at the AI service
+(`http://127.0.0.1:8000` by default). The API starts on port `5050` by default
+(macOS uses 5000 for AirPlay); set `PORT` to change it.
 
-The initial readiness endpoint is `GET http://localhost:5000/api/health`. It
+The initial readiness endpoint is `GET http://localhost:5050/api/health`. It
 reports whether the API can reach MongoDB. Accounts can be created with
 `POST /api/auth/register` (`name`, `email`, and `password`) and used to sign in
 with `POST /api/auth/login` (`email` and `password`). Successful registration
@@ -179,6 +216,10 @@ The inventory page redirects to sign-in when there is no valid session.
 Authenticated users can list and add inventory with
 `GET /api/inventory` and `POST /api/inventory`, update an item with
 `PUT /api/inventory/:id`, or delete one with `DELETE /api/inventory/:id`.
+`POST /api/inventory/classify` (`name`) asks the AI service what a typed item is
+and returns a `suggestion` (resource type, category, unit, quantity) for the form
+to prefill; if the AI service is down it returns `matched: false` and the form
+still works by hand.
 Inventory items require a name, positive quantity, resource type, and supported
 unit; items are scoped to their owner and use the same resource types as disaster
 simulations. Checklist items are persisted per user with `GET /api/checklist`
@@ -190,5 +231,34 @@ five minutes, and sync again when connectivity returns. In production, the
 service worker caches the application shell so previously loaded inventory and
 checklists remain usable offline. Offline edits are associated with the signed-in
 user and retained until the server confirms the change.
-Unknown routes return a JSON 404 response. Run the backend test command with
-`npm test`.
+Unknown routes return a JSON 404 response.
+
+## Testing
+
+```bash
+# Backend (from backend/)
+npm test
+
+# AI service (from ml-recommend/)
+.venv/bin/python -m pytest
+```
+
+`npm test` skips the live backend-to-AI tests. To run them against the real
+model, start the AI service and then run:
+
+```bash
+AI_INTEGRATION_URL=http://127.0.0.1:8000 npm test
+```
+
+`ml-recommend/tests/test_contract.py` reads the backend's config and fails if the
+resource, scenario or food type names drift apart between the two services.
+
+### AI evaluation
+
+Both models are scored against hand-labeled test sets and simpler baselines
+(from ml-recommend/):
+
+```bash
+.venv/bin/python -m eval.run_eval --method both       # recommendation ranker
+.venv/bin/python -m eval.run_food_eval                 # food classifier
+```

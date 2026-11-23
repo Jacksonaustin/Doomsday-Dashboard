@@ -9,7 +9,8 @@ Doomsday Dashboard runs using three Docker containers:
 2. Backend — Node.js and Express
 3. AI Service — Python and FastAPI
 
-MongoDB Atlas is hosted externally.
+MongoDB Atlas is hosted externally by default. An optional local MongoDB
+container is available with the `local-db` profile (see below).
 
 Docker Compose manages all three services.
 
@@ -31,7 +32,22 @@ Docker Compose manages all three services.
 
 6. Visit http://localhost:8080
 
-The AI model may download files during its first startup.
+The AI model is downloaded while the image builds, so the first
+`docker compose up --build` takes a few minutes and the AI service
+starts without network access afterwards.
+
+## Running Without MongoDB Atlas
+
+1. In `backend/.env`, set:
+
+    MONGO_URI=mongodb://mongo:27017/doomsday
+
+2. Start with the `local-db` profile:
+
+    docker compose --profile local-db up -d --build
+
+Data is kept in the `mongo-data` volume. `docker compose down -v`
+deletes it.
 
 ## Useful Docker Commands
 
@@ -68,7 +84,8 @@ containers when needed.
 
 MongoDB data remains stored in MongoDB Atlas.
 
-The AI model cache is stored in a Docker volume.
+The AI model is part of the AI service image, so rebuilding the image
+is the only time it is downloaded again.
 
 ## Production Deployment
 

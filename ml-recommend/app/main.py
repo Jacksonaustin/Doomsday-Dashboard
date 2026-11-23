@@ -5,14 +5,18 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
 from .ranker import Ranker
+from .food import FoodClassifier
 
 ranker = None
+food_classifier = None
 
 
 @asynccontextmanager
 async def lifespan(app):
-    global ranker
+    global ranker, food_classifier
     ranker = Ranker()  # load the model once at startup, not on every request
+    # Shares the ranker's model, or uses TF-IDF too if it didn't load.
+    food_classifier = FoodClassifier(model=ranker.model)
     yield
 
 
@@ -31,6 +35,11 @@ class RecommendationRequest(BaseModel):
     top_k: int = Field(default=3, ge=1, le=5)
     # Optional, so older callers still work. Unknown keys rank like no scenario.
     scenario: str | None = Field(default=None, max_length=50)
+
+
+class FoodRequest(BaseModel):
+    # Same limit as an inventory item's name.
+    name: str = Field(min_length=1, max_length=100)
 
 
 @app.get("/health")
@@ -56,4 +65,14 @@ def recommendations(request: RecommendationRequest):
             "results": results,
         },
         "message": "Recommendations ranked" if results else "No shortages to rank",
+    }
+
+
+@app.post("/food/classify")
+def classify_food(request: FoodRequest):
+    result = food_classifier.classify(request.name)
+    return {
+        "success": True,
+        "data": {"method": food_classifier.method, **result},
+        "message": "Food item recognized" if result["matched"] else "Not sure what this is",
     }
